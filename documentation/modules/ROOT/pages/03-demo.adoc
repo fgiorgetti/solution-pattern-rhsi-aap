@@ -388,6 +388,14 @@ Here are the Custom Resources (CRs) needed to define the site bundles.
 In order to prepare a site bundle to be installed at the Third Party Networks, we will use the CRs located under
 `*./internal/net-a*` and `*./internal/net-b*` folders.
 
+[IMPORTANT]
+====
+The connectors extracted from the tar ball, are defined in two different files, named:
+`./internal/net-a/30-connectors.yaml` and `./internal/net-b/30-connectors.yaml`. They are
+defined using static IP addresses who must be updated, to work on your environment. +
+Make sure to update them, otherwise {rhsi} won't be able to reach the target servers.
+====
+
 Along with these CRs, we also need to generate `*AccessTokens*`, so that the bundles have the ability to establish
 an RHSI link against the RHSI site running on the {ocp} cluster on namespaces `*net-a*` and `*net-b*` respectively.
 
