@@ -91,6 +91,9 @@
   <li class="nav-item" data-depth="2">
     <a class="nav-link" href="02-architecture.html#more_tech">2.3. More about the technology stack</a>
   </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="02-architecture.html#walkthrough_overview">2.4. Walkthrough overview</a>
+  </li>
 </ul>
   </li>
   <li class="nav-item is-current-page" data-depth="1">
@@ -105,19 +108,19 @@
     <a class="nav-link" href="#_walkthrough">3.2. Walkthrough</a>
 <ul class="nav-list">
   <li class="nav-item" data-depth="3">
-    <a class="nav-link" href="#_downloading_resources_needed">3.3. Downloading resources needed</a>
+    <a class="nav-link" href="#_installing_the_red_hat_service_interconnect_command_line_tool">3.3. Installing the Red Hat Service Interconnect command line tool</a>
   </li>
   <li class="nav-item" data-depth="3">
-    <a class="nav-link" href="#_installing_red_hat_ansible_automation_platform">3.4. Installing AAP</a>
+    <a class="nav-link" href="#_installing_red_hat_service_interconnect_on_red_hat_openshift">3.4. Installing RHSI on OCP</a>
   </li>
   <li class="nav-item" data-depth="3">
-    <a class="nav-link" href="#_configuring_your_ansible_automation_platform_instance">3.5. Configuring AAP</a>
+    <a class="nav-link" href="#_connecting_the_third_party_networks">3.5. Connecting Third Party Networks</a>
   </li>
   <li class="nav-item" data-depth="3">
-    <a class="nav-link" href="#_installing_red_hat_service_interconnect_on_red_hat_openshift">3.6. Installing RHSI on OCP</a>
+    <a class="nav-link" href="#_installing_red_hat_ansible_automation_platform">3.6. Installing AAP</a>
   </li>
   <li class="nav-item" data-depth="3">
-    <a class="nav-link" href="#_connecting_the_third_party_networks">3.7. Connecting Third Party Networks</a>
+    <a class="nav-link" href="#_configuring_your_ansible_automation_platform_instance">3.7. Configuring AAP</a>
   </li>
   <li class="nav-item" data-depth="3">
     <a class="nav-link" href="#_validating_the_scenario">3.8. Validating the scenario</a>
@@ -199,7 +202,10 @@
 <p>A machine or a virtual machine with Red Hat Enterprise Linux to simulate third-party network A, with access to the respective servers</p>
 </li>
 <li>
-<p>A Linux machine or virtual machine with Podman version 4+ to simulate third-party network B, with access to the respective servers</p>
+<p>A Linux machine or virtual machine with Podman version 4+ to simulate third-party network B, with access to the respective servers (optional)</p>
+</li>
+<li>
+<p>Install the Skupper CLI version 2.x</p>
 </li>
 <li>
 <p>The following commands are expected: <code>kubectl</code>, <code>jq</code>, <code>awk</code>, <code>wget</code> and <code>podman</code></p>
@@ -212,520 +218,22 @@
 <h2 id="_walkthrough"><a class="anchor" href="#_walkthrough"></a><a class="link" href="#_walkthrough">2. Walkthrough</a></h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_downloading_resources_needed"><a class="anchor" href="#_downloading_resources_needed"></a><a class="link" href="#_downloading_resources_needed">2.1. Downloading resources needed</a></h3>
+<h3 id="_installing_the_red_hat_service_interconnect_command_line_tool"><a class="anchor" href="#_installing_the_red_hat_service_interconnect_command_line_tool"></a><a class="link" href="#_installing_the_red_hat_service_interconnect_command_line_tool">2.1. Installing the Red Hat Service Interconnect command line tool</a></h3>
 <div class="paragraph">
-<p>This walkthrough guide uses some files packaged in a tar ball, which must be downloaded and extracted locally.<br>
-To download and extract the files needed, open a terminal and execute the following commands:</p>
+<p>You need to install the Red Hat Service Interconnect command line tool in order to generate AccessTokens to the connect your third-party
+network sites with Red Hat Service Interconnect running in the cloud.</p>
 </div>
 <div class="listingblock console-input">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">wget https://raw.githubusercontent.com/fgiorgetti/solution-pattern-rhsi-aap/refs/heads/main/documentation/modules/ROOT/assets/resources.tar.gz
-tar zxvf resources.tar.gz</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">curl https://skupper.io/install.sh | sh -s -- --version 2.0.0-preview-1</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The commands used in this waltkthrough must be executed inside the folder where this tar ball
-has been extracted into.</p>
+<p>The script installs the command under your home directory. It prompts you to add the command to your path if necessary.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_installing_red_hat_ansible_automation_platform"><a class="anchor" href="#_installing_red_hat_ansible_automation_platform"></a><a class="link" href="#_installing_red_hat_ansible_automation_platform">2.2. Installing Red Hat Ansible Automation Platform</a></h3>
-<div class="paragraph">
-<p>We will just briefly explain how to install Red Hat Ansible Automation Platform on an Red Hat OpenShift cluster.
-If you need further information, please refer to the <a href="https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html-single/installing_on_openshift_container_platform/index#proc-install-cli-aap-operatorinstalling-aap-operator-cli">official installation guide</a>.</p>
-</div>
-<div class="paragraph">
-<p>Before you start, notice that you will need a valid Red Hat Ansible Automation Platform (AAP) subscription to proceed,
-otherwise you won&#8217;t be able to complete the AAP installation.</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Open the Red Hat OpenShift console</p>
-</li>
-<li>
-<p>Inside the console, go to: Operators → OperatorHub</p>
-</li>
-<li>
-<p>Search for "Ansible Automation Platform" as shown below:</p>
-<div class="imageblock">
-<div class="content">
-<img src="_images/walkthrough_operator_hub.png" alt="Operator Hub">
-</div>
-</div>
-</li>
-<li>
-<p>Select the <code>Ansible Automation Platform</code> operator and click <code><strong>Install</strong></code></p>
-<div class="imageblock">
-<div class="content">
-<img src="_images/walkthrough_operator_install.png" alt="Operator Install">
-</div>
-</div>
-</li>
-<li>
-<p>Using the default options, with <code>Installed namespace: <strong>aap</strong></code>, click <code><strong>Install</strong></code> again</p>
-</li>
-<li>
-<p>Wait for the operator to be installed and ready</p>
-</li>
-<li>
-<p>Click on the installed operator, then find the <code>Ansible Application Platform</code> resource and click <code><strong>Create instance</strong></code></p>
-<div class="imageblock">
-<div class="content">
-<img src="_images/walkthrough_aap_create.png" alt="Operator Install">
-</div>
-</div>
-</li>
-<li>
-<p>Enter the following Name, Service Type and Ingress type, then click <code><strong>Create</strong></code>:</p>
-<div class="imageblock">
-<div class="content">
-<img src="_images/walkthrough_aap_create_form.png" alt="Operator Install">
-</div>
-</div>
-</li>
-<li>
-<p>Wait for the <code>Ansible Automation Platform</code> (AAP) creation to complete (around 10 minutes)</p>
-</li>
-<li>
-<p>Once the pods are all running on the <code><strong>aap</strong></code> namespace, locate secret <code><strong>my-aap-admin-password</strong></code></p>
-</li>
-<li>
-<p>Copy the <code><strong>password</strong></code> value, which will be used next to log into the AAP console</p>
-</li>
-<li>
-<p>Under "Networking → Routes", open the URL for route <code><strong>my-aap</strong></code></p>
-</li>
-<li>
-<p>Login as admin using the password you copied earlier</p>
-</li>
-<li>
-<p>You will be prompted to <strong>enter your subscription information</strong></p>
-</li>
-<li>
-<p>Once you supply your subscription details, you should be logged into the AAP console</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_configuring_your_ansible_automation_platform_instance"><a class="anchor" href="#_configuring_your_ansible_automation_platform_instance"></a><a class="link" href="#_configuring_your_ansible_automation_platform_instance">2.3. Configuring your Ansible Automation Platform instance</a></h3>
-<div class="paragraph">
-<p>In order to validate this solution pattern, we will need to configure the Ansible Automation Platform (AAP) instance first.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<div class="paragraph">
-<p>Since the goal is to demonstrate how Red Hat Service Interconnect (RHSI) helps you connect your AAP automation with managed hosts that are not reachable,
-the AAP configuration used in this solution pattern is minimal.</p>
-</div>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Here is what we will configure:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>A project to run against all hosts</p>
-</li>
-<li>
-<p>Two inventories (one for each third-party network)</p>
-</li>
-<li>
-<p>Define the credentials</p>
-</li>
-<li>
-<p>Two job templates (one for each third-party network)</p>
-</li>
-<li>
-<p>A workflow job template (to run all third-party related job templates)</p>
-</li>
-</ul>
-</div>
-<div class="sect3">
-<h4 id="_create_a_project"><a class="anchor" href="#_create_a_project"></a><a class="link" href="#_create_a_project">2.3.1. Create a project</a></h4>
-<div class="paragraph">
-<p>The Ansible project that will be used in this solution pattern is a simple fork from the ansible-tower-samples repository
-which includes an extra task that simply creates a directory under <code><strong>/tmp</strong></code> named <code><strong>created-by-aap</strong></code>.
-This helps validate that AAP has actually connected and performed this respective task against the target host.</p>
-</div>
-<div class="paragraph">
-<p>In the AAP console, perform the following tasks:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Go to <code><strong>Projects</strong></code> on the left menu (under <em>Automation Execution</em>)</p>
-</li>
-<li>
-<p>Click <code><strong>Create project</strong></code></p>
-</li>
-<li>
-<p>Enter the following data:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Name: <strong>third-party-networks</strong></p>
-</li>
-<li>
-<p>Organization: <strong>Default</strong></p>
-</li>
-<li>
-<p>Execution environment: <strong>Default execution environment</strong></p>
-</li>
-<li>
-<p>Source control type: <strong>Git</strong></p>
-</li>
-<li>
-<p>Source control URL: <a href="https://github.com/fgiorgetti/ansible-tower-samples.git"><strong>https://github.com/fgiorgetti/ansible-tower-samples.git</strong></a></p>
-</li>
-<li>
-<p>Source control branch/tag/commit: <strong>master</strong></p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Click: <strong>Create project</strong></p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_create_the_inventories"><a class="anchor" href="#_create_the_inventories"></a><a class="link" href="#_create_the_inventories">2.3.2. Create the inventories</a></h4>
-<div class="paragraph">
-<p>Now that the project has been created, we will create two inventories. One for each third-party network.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Go to Infrastructure → Inventories on the left menu (under <em>Automation Execution</em>)</p>
-</li>
-<li>
-<p>Click: <code><strong>Create inventory → Create inventory</strong></code></p>
-</li>
-<li>
-<p>Enter the following data:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Name: <strong>third-party-network-a</strong></p>
-</li>
-<li>
-<p>Organization: <strong>Default</strong></p>
-</li>
-<li>
-<p>Click: <strong>Create inventory</strong></p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Repeat the same steps to create the inventory named: <strong>third-party-network-b</strong></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Next we need to add the target hosts for each inventory.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Open the <code><strong>third-party-network-a</strong></code> inventory and click the <code><strong>Hosts</strong></code> tab</p>
-</li>
-<li>
-<p>Click the <code><strong>Create host</strong></code> button</p>
-</li>
-<li>
-<p>Enter the following data:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Name: <strong>server-a1</strong></p>
-</li>
-<li>
-<p>Set variables to (using YAML format):</p>
-<div class="paragraph">
-<p><strong>ansible_host: server-a1.net-a</strong></p>
-</div>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Repeat the previous steps to create: <strong>server-a2</strong> and <strong>server-a3</strong></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Then we need to add the hosts for the second third-party network.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Open the <strong>third-party-network-b</strong> inventory and click the <strong>Hosts</strong> tab</p>
-</li>
-<li>
-<p>Click the <strong>Create host</strong> button</p>
-</li>
-<li>
-<p>Enter the following data:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Name: <strong>server-b1</strong></p>
-</li>
-<li>
-<p>Set variables to (using YAML format):</p>
-<div class="paragraph">
-<p><strong>ansible_host: server-b1.net-b</strong></p>
-</div>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Repeat the previous steps to create: <strong>server-b2</strong> and <strong>server-b3</strong></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>As you may have noticed, our inventories rely that the servers will be reachable through the following hostnames:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>server-a1.net-a</p>
-</li>
-<li>
-<p>server-a2.net-a</p>
-</li>
-<li>
-<p>server-a3.net-a</p>
-</li>
-<li>
-<p>server-b1.net-b</p>
-</li>
-<li>
-<p>server-b2.net-b</p>
-</li>
-<li>
-<p>server-b3.net-b</p>
-</li>
-</ul>
-</div>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-important" title="Important"></i>
-</td>
-<td class="content">
-<div class="paragraph">
-<p>At this point, these hosts cannot be resolved by AAP, but once we finish the setup of our solution, AAP should be
-able to resolve and connect with these hosts.</p>
-</div>
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_create_the_credentials"><a class="anchor" href="#_create_the_credentials"></a><a class="link" href="#_create_the_credentials">2.3.3. Create the credentials</a></h4>
-<div class="paragraph">
-<p>The inventories that will be used by Ansible have been defined, but we did not specify the credentials that Ansible
-will use to connect with those servers through SSH.<br>
-To keep it simple we will create two <code><strong>Machine</strong></code> (type) credentials. One for each third-party network.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Go to <code><strong>Infrastructure → Credentials</strong></code> (under Automation Execution)</p>
-</li>
-<li>
-<p>Click <code><strong>Create credential</strong></code></p>
-</li>
-<li>
-<p>Enter the following data:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Name: <strong>third-party-network-a</strong></p>
-</li>
-<li>
-<p>Organization: <strong>Default</strong></p>
-</li>
-<li>
-<p>Credential type: <strong>Machine</strong></p>
-</li>
-<li>
-<p>Username: <strong>cloud-user</strong></p>
-</li>
-<li>
-<p>Password: <strong>cloud-password-a</strong></p>
-</li>
-<li>
-<p>Click the <code><strong>Create credential</strong></code> button</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Repeat the same steps to create a credential named <strong>third-party-network-b</strong>.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<div class="paragraph">
-<p>Make sure you are using the correct credentials for your servers.</p>
-</div>
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_create_the_job_templates"><a class="anchor" href="#_create_the_job_templates"></a><a class="link" href="#_create_the_job_templates">2.3.4. Create the job templates</a></h4>
-<div class="paragraph">
-<p>We need to create two job templates.</p>
-</div>
-<div class="paragraph">
-<p>They will basically tie the Ansible project to be executed with the inventory that defines the target hosts and
-associate the credential to be used for each third-party network.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Go to <code><strong>Templates</strong></code> (under Automation Execution) on the left menu</p>
-</li>
-<li>
-<p>Click the <code><strong>Create template</strong></code> button, then click <code><strong>Create job template</strong></code></p>
-</li>
-<li>
-<p>Enter the following data:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Name: <strong>third-party-network-a</strong></p>
-</li>
-<li>
-<p>Inventory: <strong>third-party-network-a</strong></p>
-</li>
-<li>
-<p>Project: <strong>third-party-networks</strong></p>
-</li>
-<li>
-<p>Playbook (should be automatically set): <strong>hello_world.yml</strong></p>
-</li>
-<li>
-<p>Credentials: <strong>third-party-network-a</strong></p>
-</li>
-<li>
-<p>Click the <code><strong>Create job template</strong></code> button</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Repeat the steps above for <strong>third-party-network-b</strong>.</p>
-</div>
-<div class="paragraph">
-<p>After both <em>Job Templates</em> have been created, we need to create a <code><strong>Workflow job template</strong></code>.<br>
-It will be used to trigger both job templates at once.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Go to <code><strong>Templates</strong></code> (under Automation Execution) on the left menu</p>
-</li>
-<li>
-<p>Click the <code><strong>Create template</strong></code> button, then click <code><strong>Create workflow job template</strong></code></p>
-</li>
-<li>
-<p>Enter the following data:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Name: <code><strong>third-party-networks</strong></code></p>
-</li>
-<li>
-<p>Organization: <code><strong>Default</strong></code></p>
-</li>
-<li>
-<p>Click the <code><strong>Create workflow job template</strong></code> button</p>
-</li>
-<li>
-<p>Click the <code><strong>Add step</strong></code> button</p>
-</li>
-<li>
-<p>Node type: <code><strong>Job Template</strong></code></p>
-</li>
-<li>
-<p>Job Template: <code><strong>third-party-network-a</strong></code></p>
-</li>
-<li>
-<p>Click the <code><strong>Next</strong></code> button</p>
-</li>
-<li>
-<p>Click the <code><strong>Finish</strong></code> button</p>
-</li>
-<li>
-<p>Click the  <code><strong>Add step</strong></code> button</p>
-</li>
-<li>
-<p>Node type: <code><strong>Job Template</strong></code></p>
-</li>
-<li>
-<p>Job Template: <code><strong>third-party-network-b</strong></code></p>
-</li>
-<li>
-<p>Click the <code><strong>Next</strong></code> button</p>
-</li>
-<li>
-<p>Click the <code><strong>Finish</strong></code> button</p>
-</li>
-<li>
-<p>Click the <code><strong>Save</strong></code> button</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>You should end up with something like shown in the workflow below:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="_images/walkthrough_aap_workflow_created.png" alt="Workflow job template">
-</div>
-</div>
-<div class="paragraph">
-<p>At this point, all the AAP configuration needed is done.</p>
-</div>
-<div class="paragraph">
-<p>Now we need to install and configure <strong>Red Hat Service Interconnect</strong> to link the third-party networks with the Red Hat OpenShift cluster.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_installing_red_hat_service_interconnect_on_red_hat_openshift"><a class="anchor" href="#_installing_red_hat_service_interconnect_on_red_hat_openshift"></a><a class="link" href="#_installing_red_hat_service_interconnect_on_red_hat_openshift">2.4. Installing Red Hat Service Interconnect on Red Hat OpenShift</a></h3>
+<h3 id="_installing_red_hat_service_interconnect_on_red_hat_openshift"><a class="anchor" href="#_installing_red_hat_service_interconnect_on_red_hat_openshift"></a><a class="link" href="#_installing_red_hat_service_interconnect_on_red_hat_openshift">2.2. Installing Red Hat Service Interconnect on Red Hat OpenShift</a></h3>
 <div class="admonitionblock important">
 <table>
 <tr>
@@ -747,14 +255,12 @@ Once RHSI Version 2 is released, this whole section will be updated to use it in
 The reason for this is to ensure that each third-party network is connected to an isolated <em>Virtual Application Network</em> (VAN).</p>
 </div>
 <div class="paragraph">
-<p>Along with that we will also create <em>Network Policies</em> to ensure that each namespace is only accessible by AAP,
-so that the third-party servers exposed into the Red Hat OpenShift cluster can only be reached internally by AAP.</p>
+<p>Along with that we will also create <em>Network Policies</em> to ensure that each namespace is only accessible by AAP, so that the third-party servers exposed into the Red Hat OpenShift cluster can only be reached internally by AAP.</p>
 </div>
 <div class="sect3">
-<h4 id="_installing_the_red_hat_service_interconnect_controller"><a class="anchor" href="#_installing_the_red_hat_service_interconnect_controller"></a><a class="link" href="#_installing_the_red_hat_service_interconnect_controller">2.4.1. Installing the <strong>Red Hat Service Interconnect</strong> controller</a></h4>
+<h4 id="_installing_the_red_hat_service_interconnect_controller"><a class="anchor" href="#_installing_the_red_hat_service_interconnect_controller"></a><a class="link" href="#_installing_the_red_hat_service_interconnect_controller">2.2.1. Installing the <strong>Red Hat Service Interconnect</strong> controller</a></h4>
 <div class="paragraph">
-<p>The RHSI controller is deployed to its own namespace and it has the ability to watch for RHSI resources across all namespaces
-in the Red Hat OpenShift cluster.</p>
+<p>The RHSI controller is deployed to its own namespace and it has the ability to watch for RHSI resources across all namespaces in the Red Hat OpenShift cluster.</p>
 </div>
 <div class="paragraph">
 <p>Let&#8217;s install the RHSI controller:</p>
@@ -802,7 +308,7 @@ in the Red Hat OpenShift cluster.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_create_namespaces_for_each_third_party_network"><a class="anchor" href="#_create_namespaces_for_each_third_party_network"></a><a class="link" href="#_create_namespaces_for_each_third_party_network">2.4.2. Create namespaces for each third-party network</a></h4>
+<h4 id="_create_namespaces_for_each_third_party_network"><a class="anchor" href="#_create_namespaces_for_each_third_party_network"></a><a class="link" href="#_create_namespaces_for_each_third_party_network">2.2.2. Create namespaces for each third-party network</a></h4>
 <div class="paragraph">
 <p>Once the RHSI controller is running, we need to apply the RHSI Custom Resources (CRs) for the RHSI controller to create the:</p>
 </div>
@@ -820,31 +326,17 @@ in the Red Hat OpenShift cluster.</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>The first thing we need to do is create the namespaces for third-party networks A and B.<br>
-The namespaces will be named: <code><strong>net-a</strong></code> and <code><strong>net-b</strong></code> respectively.</p>
+<p>Just as a reminder, this walkthrough will only cover a single namespace on Red Hat OpenShift and a single third-party network. In case you want to add two or more third-party networks, the instructions are basically the same.</p>
 </div>
 <div class="paragraph">
-<p>These namespaces have already been used to compose the expected fully qualified hostnames
-used in the AAP inventories, example given: <code><strong>server-a1.net-a</strong></code>.</p>
+<p>The first thing we need to do is create the namespace for third-party network A.<br>
+The namespace will be named: <code><strong>net-a</strong></code>.</p>
 </div>
 <div class="paragraph">
-<p>Let&#8217;s have a look at the custom resources we need to define these two RHSI sites.<br>
-The resources can be found at <code><strong>./cloud/net-a</strong></code> and <code><strong>./cloud/net-b</strong></code> folders.</p>
+<p>This namespace will be used to compose the expected fully qualified hostnames to be used in the AAP inventory, example given: <code><strong>server-a1.net-a</strong></code>.</p>
 </div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
 <div class="paragraph">
-<p>The resources used from now on are available as part of the tar ball that must be
-downloaded and extracted locally. If you haven&#8217;t yet done that, go to <a href="#_downloading_resources_needed">Downloading resources needed</a>.</p>
-</div>
-</td>
-</tr>
-</table>
+<p>Let&#8217;s have a look at the custom resources we need to define this RHSI site.</p>
 </div>
 <div class="ulist">
 <ul>
@@ -869,7 +361,13 @@ downloaded and extracted locally. If you haven&#8217;t yet done that, go to <a h
 <div class="ulist">
 <ul>
 <li>
-<p>Grants the permission for other sites to redeem AccessTokens to this site</p>
+<p>Allows AccessTokens to be redeemed by other sites</p>
+</li>
+<li>
+<p>Can be configured to permit a certain amount of token redemptions</p>
+</li>
+<li>
+<p>Expire after pre-defined amount of time</p>
 </li>
 <li>
 <p>AccessTokens can be generated once the AccessGrant is ready</p>
@@ -896,47 +394,132 @@ downloaded and extracted locally. If you haven&#8217;t yet done that, go to <a h
 </ul>
 </div>
 <div class="paragraph">
-<p>Both sites set the <strong><em>linkAccess</em></strong> value to <strong><em>default</em></strong>. This will ensure that the default ingress method for the target
-cluster will be used.<br>
+<p>The site definiton sets the <strong><em>linkAccess</em></strong> value to <strong><em>default</em></strong>. This will ensure that the default ingress method for the target cluster will be used.<br>
 On Red Hat OpenShift clusters, a <strong>Route</strong> should be created, otherwise a <strong>LoadBalancer</strong> service will be created.
-This ingress method is used to accept incoming links coming from other Sites.</p>
+This ingress method is used to accept incoming links, coming from other Sites.</p>
 </div>
 <div class="paragraph">
-<p>The <code><strong>AccessGrant</strong></code> allows a single <code><strong>AccessToken</strong></code> to be redeemed and it must be redeemed within 30 minutes
-from <code><strong>AccessGrant</strong></code> creation, otherwise it won&#8217;t be valid.</p>
+<p>The <code><strong>AccessGrant</strong></code> allows a single <code><strong>AccessToken</strong></code> to be redeemed and it must be redeemed within 30 minutes from <code><strong>AccessGrant</strong></code> creation, otherwise it won&#8217;t be valid.</p>
 </div>
 <div class="paragraph">
-<p>Each site has a <code><strong>Listener</strong></code> for each target server expected by AAP.
-The <code><strong>spec.host</strong></code> field determines the Service name that will be created on the respective namespace,
-therefore the fully qualified service name will be composed by the spec.host field plus the namespace
-name, matching the hostnames added to the inventories in AAP.</p>
+<p>Each site has a <code><strong>Listener</strong></code> for each target server expected by AAP.<br>
+The <code><strong>spec.host</strong></code> field determines the service name that will be created on the respective namespace,
+therefore the fully qualified service name will be composed by the <code>spec.host</code> field plus the namespace name, matching the hostnames that will be added to the inventories in AAP.</p>
 </div>
 <div class="paragraph">
 <p>The <code><strong>spec.routingKey</strong></code> is used to determine the matching Connector.
 So the RHSI sites created inside the third-party networks, must define the respective <code><strong>spec.routingKey</strong></code>.</p>
 </div>
 <div class="paragraph">
-<p>Along with the RHSI resources, there are two <em>Network policies</em> defined to add an extra security layer (one for each namespace),
-preventing undesired internal access to your third-party network namespaces.
-These <code><strong>NetworkPolicies</strong></code> allow ingress to the <code><strong>skupper-router</strong></code> pod only coming from pods running on the <code><strong>aap</strong></code> or the
-self namespace (<code><strong>net-a</strong></code> or <code><strong>net-b</strong></code>).</p>
+<p>Along with the RHSI resources, a <em>Network policy</em> will be defined, to add an extra security layer, preventing undesired internal access to your third-party network namespaces.<br>
+This <code><strong>NetworkPolicy</strong></code> allows ingress to the <code><strong>skupper-router</strong></code> pod only coming from pods running on the <code><strong>aap</strong></code> or the self namespace <code><strong>net-a</strong></code>.</p>
 </div>
 <div class="paragraph">
-<p>To create the namespaces, the RHSI sites and the network policies, run:</p>
+<p>To create the namespace, the RHSI site and the network policy, run the following commands in your terminal that has access to the Red Hat OpenShift cluster. The commands below will first create the resources in a local directory then apply them to the Red Hat OpenShift cluster.</p>
 </div>
 <div class="listingblock console-input">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">kubectl apply -f ./cloud/net-a/
-kubectl apply -f ./cloud/net-b/</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script"># create a directory to hold all resources
+mkdir -p cloud/net-a/
+
+# create the resources needed
+cat &lt;&lt; EOF &gt; cloud/net-a/00-ns.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: net-a
+EOF
+
+cat &lt;&lt; EOF &gt; cloud/net-a/10-site.yaml
+apiVersion: skupper.io/v2alpha1
+kind: Site
+metadata:
+  name: net-a
+  namespace: net-a
+spec:
+  linkAccess: default
+EOF
+
+cat &lt;&lt; EOF &gt; cloud/net-a/20-accessgrant.yaml
+apiVersion: skupper.io/v2alpha1
+kind: AccessGrant
+metadata:
+  name: net-a-grant
+  namespace: net-a
+spec:
+  redemptionsAllowed: 1
+  expirationWindow: 30m
+EOF
+
+cat &lt;&lt; EOF &gt; cloud/net-a/30-listeners.yaml
+---
+apiVersion: skupper.io/v2alpha1
+kind: Listener
+metadata:
+  name: server-a1
+  namespace: net-a
+spec:
+  host: server-a1
+  port: 22
+  routingKey: server-a1
+  type: tcp
+---
+apiVersion: skupper.io/v2alpha1
+kind: Listener
+metadata:
+  name: server-a2
+  namespace: net-a
+spec:
+  host: server-a2
+  port: 22
+  routingKey: server-a2
+  type: tcp
+---
+apiVersion: skupper.io/v2alpha1
+kind: Listener
+metadata:
+  name: server-a3
+  namespace: net-a
+spec:
+  host: server-a3
+  port: 22
+  routingKey: server-a3
+  type: tcp
+EOF
+
+cat &lt;&lt; EOF &gt; cloud/net-a/40-networkpolicy.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: network-policy-aap
+  namespace: net-a
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: skupper-router
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchExpressions:
+        - key: 'kubernetes.io/metadata.name'
+          operator: In
+          values: ["aap", "net-a"]
+  egress:
+  - {}
+EOF
+
+kubectl apply -f ./cloud/net-a/</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>You can verify that your sites have been created running:</p>
+<p>You can verify that your site has been created running:</p>
 </div>
 <div class="listingblock console-input">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">kubectl -n net-a get pod,site
-kubectl -n net-b get pod,site</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">kubectl -n net-a get pod,site</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -948,27 +531,18 @@ kubectl -n net-b get pod,site</code></pre>
 pod/skupper-router-78b5b8ddb5-h76sm   2/2     Running   0          53m
 
 NAME                    STATUS   SITES IN NETWORK
-site.skupper.io/net-a   OK
-
-
-NAME                                  READY   STATUS    RESTARTS   AGE
-pod/skupper-router-5f54dd4f88-24rzh   2/2     Running   0          54m
-
-NAME                    STATUS   SITES IN NETWORK
-site.skupper.io/net-b   OK</pre>
+site.skupper.io/net-a   OK</pre>
 </div>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_preparing_site_bundles_for_third_party_networks"><a class="anchor" href="#_preparing_site_bundles_for_third_party_networks"></a><a class="link" href="#_preparing_site_bundles_for_third_party_networks">2.4.3. Preparing site bundles for third-party networks</a></h4>
+<h4 id="_preparing_site_bundles_for_the_third_party_network"><a class="anchor" href="#_preparing_site_bundles_for_the_third_party_network"></a><a class="link" href="#_preparing_site_bundles_for_the_third_party_network">2.2.3. Preparing site bundles for the third-party network</a></h4>
 <div class="paragraph">
 <p>A site bundle is a compressed file that contains the whole RHSI site definition to run outside of Kubernetes or OpenShift.<br>
-They can be installed to run as a container, using Podman or Docker and also as a regular process on a Red Hat Enterprise Linux server,
-which will require a local installation of the <code><strong>skupper-router</strong></code> <em>RPM</em> package.</p>
+They can be installed to run as a container, using Podman or Docker and also as a regular process on a Red Hat Enterprise Linux server, which will require a local installation of the <code><strong>skupper-router</strong></code> <em>RPM</em> package.</p>
 </div>
 <div class="paragraph">
-<p>The site bundle is an easy approach to install a prepared site definition on a remote location, but you could also create
-a non-Kubernetes site using the Skupper V2 CLI or a bootstrap container.</p>
+<p>The site bundle is an easy approach to install a prepared site definition on a remote location, but you could also create a non-Kubernetes site using the Red Hat Service Interconnect V2 CLI or a bootstrap container.</p>
 </div>
 <div class="paragraph">
 <p>Here are the Custom Resources (CRs) needed to define the site bundles.</p>
@@ -987,54 +561,74 @@ a non-Kubernetes site using the Skupper V2 CLI or a bootstrap container.</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>In order to prepare a site bundle to be installed at the Third Party Networks, we will use the CRs located under
-<code><strong>./internal/net-a</strong></code> and <code><strong>./internal/net-b</strong></code> folders.</p>
-</div>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-important" title="Important"></i>
-</td>
-<td class="content">
-<div class="paragraph">
-<p>The connectors extracted from the tar ball, are defined in two different files, named:
-<code>./internal/net-a/30-connectors.yaml</code> and <code>./internal/net-b/30-connectors.yaml</code>. They are
-defined using static IP addresses who must be updated, to work on your environment.<br>
-Make sure to update them, otherwise Red Hat Service Interconnect won&#8217;t be able to reach the target servers.</p>
-</div>
-</td>
-</tr>
-</table>
+<p>In order to prepare a site bundle to be installed at the Third Party Networks, we will create the Custom Resources (CRs) needed along with an <code><strong>AccessTokens</strong></code> that will be extracted from the <code><strong>net-a</strong></code> namespace running on the Red Hat OpenShift cluster.</p>
 </div>
 <div class="paragraph">
-<p>Along with these CRs, we also need to generate <code><strong>AccessTokens</strong></code>, so that the bundles have the ability to establish
-an RHSI link against the RHSI site running on the Red Hat OpenShift cluster on namespaces <code><strong>net-a</strong></code> and <code><strong>net-b</strong></code> respectively.</p>
-</div>
-<div class="paragraph">
-<p>To generate the <code><strong>AccessTokens</strong></code> we will need to extract some information from the <code><strong>AccessGrant</strong></code> created on both
-<code><strong>net-a</strong></code> and <code><strong>net-b</strong></code> namespaces.<br></p>
-</div>
-<div class="paragraph">
-<p>To do it, execute the following commands:</p>
+<p>To do it, execute the following commands in a terminal that has access to <code><strong>net-a</strong></code> namespace running on your Red Hat OpenShift cluster:</p>
 </div>
 <div class="listingblock console-input">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">./scripts/generate-access-token.sh net-a &gt; ./internal/net-a/20-token.yaml
-./scripts/generate-access-token.sh net-b &gt; ./internal/net-b/20-token.yaml</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">mkdir -p internal/net-a
+
+cat &lt;&lt; EOF &gt; internal/net-a/10-site.yaml
+apiVersion: skupper.io/v2alpha1
+kind: Site
+metadata:
+  name: net-a
+EOF
+
+cat &lt;&lt; EOF &gt; internal/net-a/20-connectors.yaml
+---
+apiVersion: skupper.io/v2alpha1
+kind: Connector
+metadata:
+  name: server-a1
+spec:
+  host: 192.168.8.101
+  port: 22
+  routingKey: server-a1
+---
+apiVersion: skupper.io/v2alpha1
+kind: Connector
+metadata:
+  name: server-a2
+spec:
+  host: 192.168.8.102
+  port: 22
+  routingKey: server-a2
+---
+apiVersion: skupper.io/v2alpha1
+kind: Connector
+metadata:
+  name: server-a3
+spec:
+  host: 192.168.8.103
+  port: 22
+  routingKey: server-a3
+EOF
+
+kubectl -n net-a get accessgrant net-a-grant -o template --template '
+apiVersion: skupper.io/v2alpha1
+kind: AccessToken
+metadata:
+  name: net-a-token
+spec:
+  code: "{{ .status.code }}"
+  ca: {{ printf "%q" .status.ca }}
+  url: "{{ .status.url }}"
+' &gt; internal/net-a/30-accesstoken.yaml</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Now that all the CRs are in place, we must generate the site bundles, using:</p>
+<p>Now that all the CRs are in place, we must generate the site bundle, using:</p>
 </div>
 <div class="listingblock console-input">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">curl -s https://raw.githubusercontent.com/skupperproject/skupper/refs/heads/v2/cmd/bootstrap/bootstrap.sh | sh -s -- -p ./internal/net-a -b bundle
-curl -s https://raw.githubusercontent.com/skupperproject/skupper/refs/heads/v2/cmd/bootstrap/bootstrap.sh | sh -s -- -p ./internal/net-b -b bundle</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">curl -s https://raw.githubusercontent.com/skupperproject/skupper/refs/heads/v2/cmd/bootstrap/bootstrap.sh | sh -s -- -p ./internal/net-a -b bundle</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The bundles will be generated and their location can be found through a message that says:
+<p>The bundle will be generated and its location can be found through a message that says:
 "<em>Installation bundle available at</em>". Example given:</p>
 </div>
 <div class="listingblock console-input">
@@ -1045,24 +639,17 @@ curl -s https://raw.githubusercontent.com/skupperproject/skupper/refs/heads/v2/c
 </div>
 </div>
 <div class="sect2">
-<h3 id="_connecting_the_third_party_networks"><a class="anchor" href="#_connecting_the_third_party_networks"></a><a class="link" href="#_connecting_the_third_party_networks">2.5. Connecting the Third-party Networks</a></h3>
+<h3 id="_connecting_the_third_party_network"><a class="anchor" href="#_connecting_the_third_party_network"></a><a class="link" href="#_connecting_the_third_party_network">2.3. Connecting the Third-party Network</a></h3>
 <div class="paragraph">
-<p>The last piece is to install the generated site-bundles on the respective servers for each target third-party network.</p>
+<p>The last piece to complete the Red Hat Service Interconnect setup is to install the generated site-bundles on the respective server used to reach Third-party Network A (<code><strong>net-a</strong></code>) hosts.</p>
 </div>
 <div class="paragraph">
-<p>To install, you should just send the site bundle file: <code><strong>skupper-install-net-a.sh</strong></code> or <code><strong>skupper-install-net-b.sh</strong></code> to
-the target server where the RHSI site will be installed, then execute it, for example:</p>
+<p>To install, you should just send the site bundle file: <code><strong>skupper-install-net-a.sh</strong></code> to the target server where the RHSI site will be installed, then execute it, for example:</p>
 </div>
 <div class="listingblock console-input">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">scp skupper-install-net-a.sh my-user@my-server-third-party-net-a:
 ssh my-user@my-server-third-party-net-a ./skupper-install-net-a.sh -n net-a</code></pre>
-</div>
-</div>
-<div class="listingblock console-input">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">scp skupper-install-net-b.sh my-user@my-server-third-party-net-b:
-ssh my-user@my-server-third-party-net-b ./skupper-install-net-b.sh -n net-b</code></pre>
 </div>
 </div>
 <div class="admonitionblock warning">
@@ -1090,8 +677,7 @@ Update the commands to use your own hostnames or IP addresses.</p>
 </td>
 <td class="content">
 <div class="paragraph">
-<p>If you want your <strong>Third Party Network A</strong> site to run using a regular process and not a container, you must first
-install the <code><strong>skupper-router</strong></code> <em>RPM</em> package and then you should run the bundle installation script as:</p>
+<p>If you want your <strong>Third Party Network A</strong> site to run using a regular process and not a container, you must first install the <code><strong>skupper-router</strong></code> <em>RPM</em> package and then you should run the bundle installation script as:</p>
 </div>
 <div class="listingblock console-input">
 <div class="content">
@@ -1105,37 +691,150 @@ ssh my-user@my-server-third-party-net-a ./skupper-install-net-a.sh -n net-a -p s
 </table>
 </div>
 <div class="paragraph">
-<p>Once both bundles have been installed, the three servers behind each third party network should be exposed and accessible
-by AAP inside the Red Hat OpenShift cluster.</p>
+<p>Once the bundle has been installed, the three servers behind the third party network should be exposed and accessible by AAP inside the Red Hat OpenShift cluster.</p>
+</div>
+<div class="paragraph">
+<p>Now let&#8217;s have a quick look at what must be done to install and configure Red Hat Ansible Automation Platform.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_installing_red_hat_ansible_automation_platform"><a class="anchor" href="#_installing_red_hat_ansible_automation_platform"></a><a class="link" href="#_installing_red_hat_ansible_automation_platform">2.4. Installing Red Hat Ansible Automation Platform</a></h3>
+<div class="paragraph">
+<p>We will just briefly explain what is expected from your Red Hat Ansible Automation Platform installation on the Red Hat OpenShift cluster.</p>
+</div>
+<div class="paragraph">
+<p>The Red Hat Ansible Automation Platform installation is expected to run in the "<strong>aap</strong>" namespace, using the Red Hat Ansible Automation Platform Operator and an instance of the "Ansible Automation Platform" resource must be created.</p>
+</div>
+<div class="paragraph">
+<p>If you need further information, please refer to the <a href="https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html-single/installing_on_openshift_container_platform/index#proc-install-cli-aap-operatorinstalling-aap-operator-cli">official installation guide</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_configuring_your_ansible_automation_platform_instance"><a class="anchor" href="#_configuring_your_ansible_automation_platform_instance"></a><a class="link" href="#_configuring_your_ansible_automation_platform_instance">2.5. Configuring your Ansible Automation Platform instance</a></h3>
+<div class="paragraph">
+<p>In order to validate this solution pattern, we will need to configure the Ansible Automation Platform (AAP) instance first.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Since the goal is to demonstrate how Red Hat Service Interconnect (RHSI) helps you connect your AAP automation with managed hosts that are not reachable, the AAP configuration used in this solution pattern is minimal.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Here is what we will configure:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A project to run against all hosts</p>
+</li>
+<li>
+<p>An inventory (to represent the Third-party Network A hostnames)</p>
+</li>
+<li>
+<p>Define the credential</p>
+</li>
+<li>
+<p>A job template (for Third-party Network A)</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="_create_a_project"><a class="anchor" href="#_create_a_project"></a><a class="link" href="#_create_a_project">2.5.1. Create a project</a></h4>
+<div class="paragraph">
+<p>The Ansible project that will be used in this solution pattern is a simple fork from the ansible-tower-samples repository which includes an extra task that simply creates a directory under <code><strong>/tmp</strong></code> named <code><strong>created-by-aap</strong></code>.<br>
+This helps validate that Red Hat Ansible Automation Platform has actually connected and performed this respective task against the target host.</p>
+</div>
+<div class="paragraph">
+<p>In the AAP console, create a project using the following information:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Source control type: <strong>Git</strong></p>
+</li>
+<li>
+<p>Source control URL: <a href="https://github.com/fgiorgetti/ansible-tower-samples.git"><strong>https://github.com/fgiorgetti/ansible-tower-samples.git</strong></a></p>
+</li>
+<li>
+<p>Source control branch/tag/commit: <strong>master</strong></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_create_the_inventory"><a class="anchor" href="#_create_the_inventory"></a><a class="link" href="#_create_the_inventory">2.5.2. Create the inventory</a></h4>
+<div class="paragraph">
+<p>Now that the project has been created, we will create an inventory, to represent the hostnames to be managed inside the Third-party Network A.</p>
+</div>
+<div class="paragraph">
+<p>The inventory must have entries for the following hostnames:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>server-a1.net-a</strong></p>
+</li>
+<li>
+<p><strong>server-a2.net-a</strong></p>
+</li>
+<li>
+<p><strong>server-a3.net-a</strong></p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>AAP should be able to resolve these hostnames, as they have been made available as services on the <code><strong>net-a</strong></code> namespace by Red Hat Service Interconnect, based on the <code><strong>Listeners</strong></code> created earlier.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_create_the_credential"><a class="anchor" href="#_create_the_credential"></a><a class="link" href="#_create_the_credential">2.5.3. Create the credential</a></h4>
+<div class="paragraph">
+<p>The inventory has been created but you must also make sure you have defined the appropriate credential on the Red Hat Ansible Automation Platform Console, so that it can connect with those hostnames through SSH.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_create_the_job_template"><a class="anchor" href="#_create_the_job_template"></a><a class="link" href="#_create_the_job_template">2.5.4. Create the job template</a></h4>
+<div class="paragraph">
+<p>We need to create a job template.</p>
+</div>
+<div class="paragraph">
+<p>It will basically tie the Ansible project to be executed with the inventory that defines the target hosts and associate the credential to be used to access the Third-party Network A hosts.</p>
+</div>
+<div class="paragraph">
+<p>Make sure your <code><strong>Job template</strong></code> is configured using the correct <strong>Project</strong>, <strong>Inventory</strong> and <strong>Credential</strong>.</p>
+</div>
+<div class="paragraph">
+<p>At this point, all the AAP configuration needed is done.</p>
+</div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_validating_the_scenario"><a class="anchor" href="#_validating_the_scenario"></a><a class="link" href="#_validating_the_scenario">2.6. Validating the scenario</a></h3>
 <div class="paragraph">
-<p>Now the whole scenario has been deployed, the <strong><em>Workflow job template</em></strong> that was created on AAP should be able to run and
-reach all servers.</p>
+<p>Now that the whole scenario has been deployed, the <strong><em>Job template</em></strong> that was created on AAP should be able to run and reach all servers.</p>
 </div>
 <div class="paragraph">
-<p>Back to the AAP console, go to:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code><strong>Templates</strong></code> (under Automation Execution)</p>
-</li>
-<li>
-<p>Click the <code><strong>third-party-networks</strong></code> workflow job template</p>
-</li>
-<li>
-<p>Click the <code><strong>Launch template</strong></code> button</p>
-</li>
-<li>
-<p>Watch the workflow</p>
-</li>
-<li>
-<p>You should see a successful result</p>
-</li>
-</ul>
+<p>Run your job template and you should be able to see a successful result, as in the illustrative example below.</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -1152,8 +851,7 @@ reach all servers.</p>
 <p>Red Hat Service Interconnect dramatically expands the reach of your centralized Red Hat Ansible Automation Platform by securely managing previously inaccessible hosts.</p>
 </div>
 <div class="paragraph">
-<p>Its user-friendly and declarative interface makes it easy to extend your automation to a wider range of devices,
-enabling you to manage hosts across hybrid and multi-cloud environments</p>
+<p>Its user-friendly and declarative interface makes it easy to extend your automation to a wider range of devices, enabling you to manage hosts across hybrid and multi-cloud environments.</p>
 </div>
 </div>
 </div>

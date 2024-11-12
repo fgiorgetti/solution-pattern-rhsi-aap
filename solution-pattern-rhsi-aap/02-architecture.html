@@ -91,6 +91,9 @@
   <li class="nav-item" data-depth="2">
     <a class="nav-link" href="#more_tech">2.3. More about the technology stack</a>
   </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="#walkthrough_overview">2.4. Walkthrough overview</a>
+  </li>
 </ul>
   </li>
   <li class="nav-item" data-depth="1">
@@ -105,19 +108,19 @@
     <a class="nav-link" href="03-demo.html#_walkthrough">3.2. Walkthrough</a>
 <ul class="nav-list">
   <li class="nav-item" data-depth="3">
-    <a class="nav-link" href="03-demo.html#_downloading_resources_needed">3.3. Downloading resources needed</a>
+    <a class="nav-link" href="03-demo.html#_installing_the_red_hat_service_interconnect_command_line_tool">3.3. Installing the Red Hat Service Interconnect command line tool</a>
   </li>
   <li class="nav-item" data-depth="3">
-    <a class="nav-link" href="03-demo.html#_installing_red_hat_ansible_automation_platform">3.4. Installing AAP</a>
+    <a class="nav-link" href="03-demo.html#_installing_red_hat_service_interconnect_on_red_hat_openshift">3.4. Installing RHSI on OCP</a>
   </li>
   <li class="nav-item" data-depth="3">
-    <a class="nav-link" href="03-demo.html#_configuring_your_ansible_automation_platform_instance">3.5. Configuring AAP</a>
+    <a class="nav-link" href="03-demo.html#_connecting_the_third_party_networks">3.5. Connecting Third Party Networks</a>
   </li>
   <li class="nav-item" data-depth="3">
-    <a class="nav-link" href="03-demo.html#_installing_red_hat_service_interconnect_on_red_hat_openshift">3.6. Installing RHSI on OCP</a>
+    <a class="nav-link" href="03-demo.html#_installing_red_hat_ansible_automation_platform">3.6. Installing AAP</a>
   </li>
   <li class="nav-item" data-depth="3">
-    <a class="nav-link" href="03-demo.html#_connecting_the_third_party_networks">3.7. Connecting Third Party Networks</a>
+    <a class="nav-link" href="03-demo.html#_configuring_your_ansible_automation_platform_instance">3.7. Configuring AAP</a>
   </li>
   <li class="nav-item" data-depth="3">
     <a class="nav-link" href="03-demo.html#_validating_the_scenario">3.8. Validating the scenario</a>
@@ -247,8 +250,7 @@ and security, a selected set of servers, running in the third-party network, wil
 within the third-party network, into the third-party specific namespace on the Red Hat OpenShift cluster.</p>
 </div>
 <div class="paragraph">
-<p>The respective servers are then exposed as Kubernetes services within the third-party namespace, where the AAP instance
-will be able to communicate with them via SSH transparently through RHSI.</p>
+<p>The respective servers are then exposed as Kubernetes services within the third-party namespace, allowing the AAP instance to communicate with them via SSH transparently through RHSI.</p>
 </div>
 <div class="paragraph">
 <p>Distinct inventories will be created inside AAP, for each third-party network, representing the servers to be managed.</p>
@@ -287,7 +289,7 @@ organizations to achieve optimal performance, security, and scalability.</p>
 <h2 id="more_tech"><a class="anchor" href="#more_tech"></a><a class="link" href="#more_tech">3. About the Technology Stack</a></h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Red Hat Service Interconnect provides access to selected workloads running in the third-party network.
+<p>Red Hat Service Interconnect provides access to selected workloads running in the third-party network.<br>
 In this solution pattern, we illustrate two third-party networks being managed by AAP.
 One of them, represented as <strong><em>Third-party network A</em></strong> has an RHSI instance running on a <strong>Red Hat Enterprise Linux</strong> (RHEL) machine.</p>
 </div>
@@ -295,8 +297,35 @@ One of them, represented as <strong><em>Third-party network A</em></strong> has 
 <p>The following one, represented as <strong><em>Third-party network B</em></strong> has an RHSI instance running using <strong>Podman</strong>.</p>
 </div>
 <div class="paragraph">
-<p>It is important to mention that Red Hat Service Interconnect (version 2+) runs on Kubernetes clusters,
+<p>It is important to mention that Red Hat Service Interconnect (version 2+) runs on any Kubernetes cluster (like Red Hat OpenShift),
 Red Hat Enterprise Linux and using Podman or Docker container engines.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="walkthrough_overview"><a class="anchor" href="#walkthrough_overview"></a><a class="link" href="#walkthrough_overview">4. Walkthrough overview</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In the next section, we will walk you through the setup of this solution pattern. This walkthrough guide will cover just a subset of the architecture diagram presented earlier.</p>
+</div>
+<div class="paragraph">
+<p>It explains what needs to be done in order to:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Install Red Hat Service Interconnect version 2 on a Red Hat OpenShift cluster</p>
+</li>
+<li>
+<p>Create a functional Red Hat Service Interconnect Site on Red Hat OpenShift to provide access to the <em>Third-party Network A</em> hostnames</p>
+</li>
+<li>
+<p>Create and install a Red Hat Service Interconnect Site Bundle inside the <em>Third-party Network A</em></p>
+</li>
+<li>
+<p>Provide a minimum set of configuration needed on a Red Hat Ansible Automation Platform installation running on Red Hat OpenShift</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
