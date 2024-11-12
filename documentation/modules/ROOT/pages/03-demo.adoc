@@ -16,218 +16,24 @@ In order to reproduce the following solution, you will need the following resour
 * {rhsi} (version 2.x) RPM to be installed at the {rhel} machine (for Third-party Network A)  
 * A few virtual machines to be used as third-party servers, with SSH server running  
 * A machine or a virtual machine with {rhel} to simulate third-party network A, with access to the respective servers  
-* A Linux machine or virtual machine with Podman version 4+ to simulate third-party network B, with access to the respective servers
+* A Linux machine or virtual machine with Podman version 4+ to simulate third-party network B, with access to the respective servers (optional)
+* Install the Skupper CLI version 2.x
 * The following commands are expected: `kubectl`, `jq`, `awk`, `wget` and `podman`
 
 == Walkthrough
 
-=== Downloading resources needed
+=== Installing the {rhsi} command line tool
 
-This walkthrough guide uses some files packaged in a tar ball, which must be downloaded and extracted locally. +
-To download and extract the files needed, open a terminal and execute the following commands:
+You need to install the {rhsi} command line tool in order to generate AccessTokens to the connect your third-party
+network sites with {rhsi} running in the cloud.
 
 [.console-input]
 [source,shell script]
 ----
-wget https://raw.githubusercontent.com/fgiorgetti/solution-pattern-rhsi-aap/refs/heads/main/documentation/modules/ROOT/assets/resources.tar.gz
-tar zxvf resources.tar.gz
+curl https://skupper.io/install.sh | sh -s -- --version 2.0.0-preview-1
 ----
 
-The commands used in this waltkthrough must be executed inside the folder where this tar ball
-has been extracted into.
-
-=== Installing {aap}
-
-We will just briefly explain how to install {aap} on an {ocp} cluster.
-If you need further information, please refer to the https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html-single/installing_on_openshift_container_platform/index#proc-install-cli-aap-operatorinstalling-aap-operator-cli[official installation guide].
-
-Before you start, notice that you will need a valid {aap} (AAP) subscription to proceed,
-otherwise you won't be able to complete the AAP installation.
-
-. Open the {ocp} console
-. Inside the console, go to: Operators → OperatorHub
-. Search for "Ansible Automation Platform" as shown below:
-+
-image::walkthrough_operator_hub.png[Operator Hub]
-+
-. Select the `Ansible Automation Platform` operator and click `*Install*`
-+
-image::walkthrough_operator_install.png[Operator Install]
-+
-. Using the default options, with `Installed namespace: *aap*`, click `*Install*` again
-. Wait for the operator to be installed and ready
-. Click on the installed operator, then find the `Ansible Application Platform` resource and click `*Create instance*`
-+
-image::walkthrough_aap_create.png[Operator Install]
-+
-. Enter the following Name, Service Type and Ingress type, then click `*Create*`:
-+
-image::walkthrough_aap_create_form.png[Operator Install]
-+
-. Wait for the `Ansible Automation Platform` (AAP) creation to complete (around 10 minutes)
-. Once the pods are all running on the `*aap*` namespace, locate secret `*my-aap-admin-password*`
-. Copy the `*password*` value, which will be used next to log into the AAP console
-. Under "Networking → Routes", open the URL for route `*my-aap*`
-. Login as admin using the password you copied earlier
-. You will be prompted to *enter your subscription information*
-. Once you supply your subscription details, you should be logged into the AAP console
-
-=== Configuring your Ansible Automation Platform instance
-
-In order to validate this solution pattern, we will need to configure the Ansible Automation Platform (AAP) instance first.
-
-[NOTE]
-====
-Since the goal is to demonstrate how {rhsi} (RHSI) helps you connect your AAP automation with managed hosts that are not reachable,
-the AAP configuration used in this solution pattern is minimal.
-====
-
-Here is what we will configure:
-
-* A project to run against all hosts
-* Two inventories (one for each third-party network)
-* Define the credentials
-* Two job templates (one for each third-party network)
-* A workflow job template (to run all third-party related job templates)
-
-==== Create a project
-
-The Ansible project that will be used in this solution pattern is a simple fork from the ansible-tower-samples repository
-which includes an extra task that simply creates a directory under `*/tmp*` named `*created-by-aap*`.
-This helps validate that AAP has actually connected and performed this respective task against the target host.
-
-In the AAP console, perform the following tasks:
-
-* Go to `*Projects*` on the left menu (under _Automation Execution_)
-* Click `*Create project*`
-* Enter the following data:
- ** Name: *third-party-networks*
- ** Organization: *Default*
- ** Execution environment: *Default execution environment*
- ** Source control type: *Git*
- ** Source control URL: https://github.com/fgiorgetti/ansible-tower-samples.git[*https://github.com/fgiorgetti/ansible-tower-samples.git*]
- ** Source control branch/tag/commit: *master*
-* Click: *Create project*
-
-==== Create the inventories
-
-Now that the project has been created, we will create two inventories. One for each third-party network.
-
-* Go to Infrastructure → Inventories on the left menu (under _Automation Execution_)
-* Click: `*Create inventory → Create inventory*`
-* Enter the following data:
- ** Name: *third-party-network-a*
- ** Organization: *Default*
- ** Click: *Create inventory*
-* Repeat the same steps to create the inventory named: *third-party-network-b*
-
-Next we need to add the target hosts for each inventory.
-
-* Open the `*third-party-network-a*` inventory and click the `*Hosts*` tab
-* Click the `*Create host*` button
-* Enter the following data:
- ** Name: *server-a1*
- ** Set variables to (using YAML format):
-+
-*ansible_host: server-a1.net-a*
-* Repeat the previous steps to create: *server-a2* and *server-a3*
-
-Then we need to add the hosts for the second third-party network.
-
-* Open the *third-party-network-b* inventory and click the *Hosts* tab
-* Click the *Create host* button
-* Enter the following data:
- ** Name: *server-b1*
- ** Set variables to (using YAML format):
-+
-*ansible_host: server-b1.net-b*
-* Repeat the previous steps to create: *server-b2* and *server-b3*
-
-As you may have noticed, our inventories rely that the servers will be reachable through the following hostnames:
-
-* server-a1.net-a
-* server-a2.net-a
-* server-a3.net-a
-* server-b1.net-b
-* server-b2.net-b
-* server-b3.net-b
-
-[IMPORTANT]
-====
-At this point, these hosts cannot be resolved by AAP, but once we finish the setup of our solution, AAP should be
-able to resolve and connect with these hosts.
-====
-
-==== Create the credentials
-
-The inventories that will be used by Ansible have been defined, but we did not specify the credentials that Ansible
-will use to connect with those servers through SSH. +
-To keep it simple we will create two `*Machine*` (type) credentials. One for each third-party network.
-
-* Go to `*Infrastructure → Credentials*` (under Automation Execution)
-* Click `*Create credential*`
-* Enter the following data:
- ** Name: *third-party-network-a*
- ** Organization: *Default*
- ** Credential type: *Machine*
- ** Username: *cloud-user*
- ** Password: *cloud-password-a*
- ** Click the `*Create credential*` button
-
-Repeat the same steps to create a credential named *third-party-network-b*.
-
-[NOTE]
-====
-Make sure you are using the correct credentials for your servers.
-====
-
-==== Create the job templates
-
-We need to create two job templates.
-
-They will basically tie the Ansible project to be executed with the inventory that defines the target hosts and
-associate the credential to be used for each third-party network.
-
-* Go to `*Templates*` (under Automation Execution) on the left menu
-* Click the `*Create template*` button, then click `*Create job template*`
-* Enter the following data:
- ** Name: *third-party-network-a*
- ** Inventory: *third-party-network-a*
- ** Project: *third-party-networks*
- ** Playbook (should be automatically set): *hello_world.yml*
- ** Credentials: *third-party-network-a*
- ** Click the `*Create job template*` button
-
-Repeat the steps above for *third-party-network-b*.
-
-After both _Job Templates_ have been created, we need to create a `*Workflow job template*`. +
-It will be used to trigger both job templates at once.
-
-* Go to `*Templates*` (under Automation Execution) on the left menu
-* Click the `*Create template*` button, then click `*Create workflow job template*`
-* Enter the following data:
- ** Name: `*third-party-networks*`
- ** Organization: `*Default*`
- ** Click the `*Create workflow job template*` button
- ** Click the `*Add step*` button
- ** Node type: `*Job Template*`
- ** Job Template: `*third-party-network-a*`
- ** Click the `*Next*` button
- ** Click the `*Finish*` button
- ** Click the  `*Add step*` button
- ** Node type: `*Job Template*`
- ** Job Template: `*third-party-network-b*`
- ** Click the `*Next*` button
- ** Click the `*Finish*` button
- ** Click the `*Save*` button
-
-You should end up with something like shown in the workflow below:
-
-image::walkthrough_aap_workflow_created.png[Workflow job template]
-
-At this point, all the AAP configuration needed is done.
-
-Now we need to install and configure *{rhsi}* to link the third-party networks with the {ocp} cluster.
+The script installs the command under your home directory. It prompts you to add the command to your path if necessary.
 
 === Installing {rhsi} on {ocp}
 
@@ -241,13 +47,11 @@ Once RHSI Version 2 is released, this whole section will be updated to use it in
 We need to install *{rhsi}* in two separate namespaces. +
 The reason for this is to ensure that each third-party network is connected to an isolated _Virtual Application Network_ (VAN).
 
-Along with that we will also create _Network Policies_ to ensure that each namespace is only accessible by AAP,
-so that the third-party servers exposed into the {ocp} cluster can only be reached internally by AAP.
+Along with that we will also create _Network Policies_ to ensure that each namespace is only accessible by AAP, so that the third-party servers exposed into the {ocp} cluster can only be reached internally by AAP.
 
 ==== Installing the *{rhsi}* controller
 
-The RHSI controller is deployed to its own namespace and it has the ability to watch for RHSI resources across all namespaces
-in the {ocp} cluster.
+The RHSI controller is deployed to its own namespace and it has the ability to watch for RHSI resources across all namespaces in the {ocp} cluster.
 
 Let's install the RHSI controller:
 
@@ -286,70 +90,152 @@ Once the RHSI controller is running, we need to apply the RHSI Custom Resources 
 * Listeners
 * AccessGrants
 
-The first thing we need to do is create the namespaces for third-party networks A and B. +
-The namespaces will be named: `*net-a*` and `*net-b*` respectively.
+Just as a reminder, this walkthrough will only cover a single namespace on {ocp} and a single third-party network. In case you want to add two or more third-party networks, the instructions are basically the same.
 
-These namespaces have already been used to compose the expected fully qualified hostnames
-used in the AAP inventories, example given: `*server-a1.net-a*`.
+The first thing we need to do is create the namespace for third-party network A. +
+The namespace will be named: `*net-a*`.
 
-Let's have a look at the custom resources we need to define these two RHSI sites. +
-The resources can be found at `*./cloud/net-a*` and `*./cloud/net-b*` folders.
+This namespace will be used to compose the expected fully qualified hostnames to be used in the AAP inventory, example given: `*server-a1.net-a*`.
 
-[NOTE]
-====
-The resources used from now on are available as part of the tar ball that must be
-downloaded and extracted locally. If you haven't yet done that, go to <<_downloading_resources_needed>>.
-====
+Let's have a look at the custom resources we need to define this RHSI site.
 
 * `*Site*`
  ** A Site represents a separate RHSI instance
  ** You can only have a single RHSI site per namespace
  ** It is the main resource to be created
 * `*AccessGrant*`
- ** Grants the permission for other sites to redeem AccessTokens to this site
+ ** Allows AccessTokens to be redeemed by other sites
+ ** Can be configured to permit a certain amount of token redemptions
+ ** Expire after pre-defined amount of time
  ** AccessTokens can be generated once the AccessGrant is ready
 * `*Listener*`
  ** Represents an ingress to target workloads exposed in your Virtual Application Network (VAN)
  ** On OpenShift / Kubernetes they are realized as a Service
  ** Listeners must have a corresponding Connector available in some other Site linked to the VAN
 
-Both sites set the *_linkAccess_* value to *_default_*. This will ensure that the default ingress method for the target
-cluster will be used. +
+The site definiton sets the *_linkAccess_* value to *_default_*. This will ensure that the default ingress method for the target cluster will be used. +
 On {ocp} clusters, a *Route* should be created, otherwise a *LoadBalancer* service will be created.
-This ingress method is used to accept incoming links coming from other Sites.
+This ingress method is used to accept incoming links, coming from other Sites.
 
-The `*AccessGrant*` allows a single `*AccessToken*` to be redeemed and it must be redeemed within 30 minutes
-from `*AccessGrant*` creation, otherwise it won't be valid.
+The `*AccessGrant*` allows a single `*AccessToken*` to be redeemed and it must be redeemed within 30 minutes from `*AccessGrant*` creation, otherwise it won't be valid.
 
-Each site has a `*Listener*` for each target server expected by AAP.
-The `*spec.host*` field determines the Service name that will be created on the respective namespace,
-therefore the fully qualified service name will be composed by the spec.host field plus the namespace
-name, matching the hostnames added to the inventories in AAP.
+Each site has a `*Listener*` for each target server expected by AAP. +
+The `*spec.host*` field determines the service name that will be created on the respective namespace,
+therefore the fully qualified service name will be composed by the `spec.host` field plus the namespace name, matching the hostnames that will be added to the inventories in AAP.
 
 The `*spec.routingKey*` is used to determine the matching Connector.
 So the RHSI sites created inside the third-party networks, must define the respective `*spec.routingKey*`.
 
-Along with the RHSI resources, there are two _Network policies_ defined to add an extra security layer (one for each namespace),
-preventing undesired internal access to your third-party network namespaces.
-These `*NetworkPolicies*` allow ingress to the `*skupper-router*` pod only coming from pods running on the `*aap*` or the
-self namespace (`*net-a*` or `*net-b*`).
+Along with the RHSI resources, a _Network policy_ will be defined, to add an extra security layer, preventing undesired internal access to your third-party network namespaces. +
+This `*NetworkPolicy*` allows ingress to the `*skupper-router*` pod only coming from pods running on the `*aap*` or the self namespace `*net-a*`.
 
-To create the namespaces, the RHSI sites and the network policies, run:
+To create the namespace, the RHSI site and the network policy, run the following commands in your terminal that has access to the {ocp} cluster. The commands below will first create the resources in a local directory then apply them to the {ocp} cluster.
+
 [.console-input]
 [source,shell script]
 ----
+# create a directory to hold all resources
+mkdir -p cloud/net-a/
+
+# create the resources needed
+cat << EOF > cloud/net-a/00-ns.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: net-a
+EOF
+
+cat << EOF > cloud/net-a/10-site.yaml
+apiVersion: skupper.io/v2alpha1
+kind: Site
+metadata:
+  name: net-a
+  namespace: net-a
+spec:
+  linkAccess: default
+EOF
+
+cat << EOF > cloud/net-a/20-accessgrant.yaml
+apiVersion: skupper.io/v2alpha1
+kind: AccessGrant
+metadata:
+  name: net-a-grant
+  namespace: net-a
+spec:
+  redemptionsAllowed: 1
+  expirationWindow: 30m
+EOF
+
+cat << EOF > cloud/net-a/30-listeners.yaml
+---
+apiVersion: skupper.io/v2alpha1
+kind: Listener
+metadata:
+  name: server-a1
+  namespace: net-a
+spec:
+  host: server-a1
+  port: 22
+  routingKey: server-a1
+  type: tcp
+---
+apiVersion: skupper.io/v2alpha1
+kind: Listener
+metadata:
+  name: server-a2
+  namespace: net-a
+spec:
+  host: server-a2
+  port: 22
+  routingKey: server-a2
+  type: tcp
+---
+apiVersion: skupper.io/v2alpha1
+kind: Listener
+metadata:
+  name: server-a3
+  namespace: net-a
+spec:
+  host: server-a3
+  port: 22
+  routingKey: server-a3
+  type: tcp
+EOF
+
+cat << EOF > cloud/net-a/40-networkpolicy.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: network-policy-aap
+  namespace: net-a
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: skupper-router
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchExpressions:
+        - key: 'kubernetes.io/metadata.name'
+          operator: In
+          values: ["aap", "net-a"]
+  egress:
+  - {}
+EOF
+
 kubectl apply -f ./cloud/net-a/
-kubectl apply -f ./cloud/net-b/
 ----
 
 
-You can verify that your sites have been created running:
+You can verify that your site has been created running:
 
 [.console-input]
 [source,shell script]
 ----
 kubectl -n net-a get pod,site
-kubectl -n net-b get pod,site
 ----
 
 And you should see an output similar to this one:
@@ -361,23 +247,14 @@ pod/skupper-router-78b5b8ddb5-h76sm   2/2     Running   0          53m
 
 NAME                    STATUS   SITES IN NETWORK
 site.skupper.io/net-a   OK
-
-
-NAME                                  READY   STATUS    RESTARTS   AGE
-pod/skupper-router-5f54dd4f88-24rzh   2/2     Running   0          54m
-
-NAME                    STATUS   SITES IN NETWORK
-site.skupper.io/net-b   OK
 ----
 
-==== Preparing site bundles for third-party networks
+==== Preparing site bundles for the third-party network
 
 A site bundle is a compressed file that contains the whole RHSI site definition to run outside of Kubernetes or OpenShift. +
-They can be installed to run as a container, using Podman or Docker and also as a regular process on a {rhel} server,
-which will require a local installation of the `*skupper-router*` _RPM_ package.
+They can be installed to run as a container, using Podman or Docker and also as a regular process on a {rhel} server, which will require a local installation of the `*skupper-router*` _RPM_ package.
 
-The site bundle is an easy approach to install a prepared site definition on a remote location, but you could also create
-a non-Kubernetes site using the Skupper V2 CLI or a bootstrap container.
+The site bundle is an easy approach to install a prepared site definition on a remote location, but you could also create a non-Kubernetes site using the {rhsi} V2 CLI or a bootstrap container.
 
 Here are the Custom Resources (CRs) needed to define the site bundles.
 
@@ -385,42 +262,73 @@ Here are the Custom Resources (CRs) needed to define the site bundles.
 * `*Connectors*`
 * `*AccessToken*` (will be generated from `*AccessGrants*` created earlier)
 
-In order to prepare a site bundle to be installed at the Third Party Networks, we will use the CRs located under
-`*./internal/net-a*` and `*./internal/net-b*` folders.
+In order to prepare a site bundle to be installed at the Third Party Networks, we will create the Custom Resources (CRs) needed along with an `*AccessTokens*` that will be extracted from the `*net-a*` namespace running on the {ocp} cluster.
 
-[IMPORTANT]
-====
-The connectors extracted from the tar ball, are defined in two different files, named:
-`./internal/net-a/30-connectors.yaml` and `./internal/net-b/30-connectors.yaml`. They are
-defined using static IP addresses who must be updated, to work on your environment. +
-Make sure to update them, otherwise {rhsi} won't be able to reach the target servers.
-====
-
-Along with these CRs, we also need to generate `*AccessTokens*`, so that the bundles have the ability to establish
-an RHSI link against the RHSI site running on the {ocp} cluster on namespaces `*net-a*` and `*net-b*` respectively.
-
-To generate the `*AccessTokens*` we will need to extract some information from the `*AccessGrant*` created on both
-`*net-a*` and `*net-b*` namespaces. +
-
-To do it, execute the following commands:
+To do it, execute the following commands in a terminal that has access to `*net-a*` namespace running on your {ocp} cluster:
 
 [.console-input]
 [source,shell script]
 ----
-./scripts/generate-access-token.sh net-a > ./internal/net-a/20-token.yaml
-./scripts/generate-access-token.sh net-b > ./internal/net-b/20-token.yaml
+mkdir -p internal/net-a
+
+cat << EOF > internal/net-a/10-site.yaml
+apiVersion: skupper.io/v2alpha1
+kind: Site
+metadata:
+  name: net-a
+EOF
+
+cat << EOF > internal/net-a/20-connectors.yaml
+---
+apiVersion: skupper.io/v2alpha1
+kind: Connector
+metadata:
+  name: server-a1
+spec:
+  host: 192.168.8.101
+  port: 22
+  routingKey: server-a1
+---
+apiVersion: skupper.io/v2alpha1
+kind: Connector
+metadata:
+  name: server-a2
+spec:
+  host: 192.168.8.102
+  port: 22
+  routingKey: server-a2
+---
+apiVersion: skupper.io/v2alpha1
+kind: Connector
+metadata:
+  name: server-a3
+spec:
+  host: 192.168.8.103
+  port: 22
+  routingKey: server-a3
+EOF
+
+kubectl -n net-a get accessgrant net-a-grant -o template --template '
+apiVersion: skupper.io/v2alpha1
+kind: AccessToken
+metadata:
+  name: net-a-token
+spec:
+  code: "{{ .status.code }}"
+  ca: {{ printf "%q" .status.ca }}
+  url: "{{ .status.url }}"
+' > internal/net-a/30-accesstoken.yaml
 ----
 
-Now that all the CRs are in place, we must generate the site bundles, using:
+Now that all the CRs are in place, we must generate the site bundle, using:
 
 [.console-input]
 [source,shell script]
 ----
 curl -s https://raw.githubusercontent.com/skupperproject/skupper/refs/heads/v2/cmd/bootstrap/bootstrap.sh | sh -s -- -p ./internal/net-a -b bundle
-curl -s https://raw.githubusercontent.com/skupperproject/skupper/refs/heads/v2/cmd/bootstrap/bootstrap.sh | sh -s -- -p ./internal/net-b -b bundle
 ----
 
-The bundles will be generated and their location can be found through a message that says:
+The bundle will be generated and its location can be found through a message that says:
 "_Installation bundle available at_". Example given:
 
 [.console-input]
@@ -428,25 +336,17 @@ The bundles will be generated and their location can be found through a message 
 Installation bundle available at: /home/my-user/.local/share/skupper/bundles/skupper-install-net-a.sh
 ----
 
-=== Connecting the Third-party Networks
+=== Connecting the Third-party Network
 
-The last piece is to install the generated site-bundles on the respective servers for each target third-party network.
+The last piece to complete the {rhsi} setup is to install the generated site-bundles on the respective server used to reach Third-party Network A (`*net-a*`) hosts.
 
-To install, you should just send the site bundle file: `*skupper-install-net-a.sh*` or `*skupper-install-net-b.sh*` to
-the target server where the RHSI site will be installed, then execute it, for example:
+To install, you should just send the site bundle file: `*skupper-install-net-a.sh*` to the target server where the RHSI site will be installed, then execute it, for example:
 
 [.console-input]
 [source,shell script]
 ----
 scp skupper-install-net-a.sh my-user@my-server-third-party-net-a:
 ssh my-user@my-server-third-party-net-a ./skupper-install-net-a.sh -n net-a
-----
-
-[.console-input]
-[source,shell script]
-----
-scp skupper-install-net-b.sh my-user@my-server-third-party-net-b:
-ssh my-user@my-server-third-party-net-b ./skupper-install-net-b.sh -n net-b
 ----
 
 [WARNING]
@@ -459,8 +359,7 @@ Update the commands to use your own hostnames or IP addresses.
 
 [NOTE]
 ====
-If you want your *Third Party Network A* site to run using a regular process and not a container, you must first
-install the `*skupper-router*` _RPM_ package and then you should run the bundle installation script as:
+If you want your *Third Party Network A* site to run using a regular process and not a container, you must first install the `*skupper-router*` _RPM_ package and then you should run the bundle installation script as:
 
 [.console-input]
 [source,shell script]
@@ -471,21 +370,79 @@ ssh my-user@my-server-third-party-net-a ./skupper-install-net-a.sh -n net-a -p s
 ----
 ====
 
-Once both bundles have been installed, the three servers behind each third party network should be exposed and accessible
-by AAP inside the {ocp} cluster.
+Once the bundle has been installed, the three servers behind the third party network should be exposed and accessible by AAP inside the {ocp} cluster.
+
+Now let's have a quick look at what must be done to install and configure {aap}.
+
+=== Installing {aap}
+
+We will just briefly explain what is expected from your {aap} installation on the {ocp} cluster.
+
+The {aap} installation is expected to run in the "*aap*" namespace, using the {aap} Operator and an instance of the "Ansible Automation Platform" resource must be created.
+
+If you need further information, please refer to the https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html-single/installing_on_openshift_container_platform/index#proc-install-cli-aap-operatorinstalling-aap-operator-cli[official installation guide].
+
+=== Configuring your Ansible Automation Platform instance
+
+In order to validate this solution pattern, we will need to configure the Ansible Automation Platform (AAP) instance first.
+
+[NOTE]
+====
+Since the goal is to demonstrate how {rhsi} (RHSI) helps you connect your AAP automation with managed hosts that are not reachable, the AAP configuration used in this solution pattern is minimal.
+====
+
+Here is what we will configure:
+
+* A project to run against all hosts
+* An inventory (to represent the Third-party Network A hostnames)
+* Define the credential
+* A job template (for Third-party Network A)
+
+==== Create a project
+
+The Ansible project that will be used in this solution pattern is a simple fork from the ansible-tower-samples repository which includes an extra task that simply creates a directory under `*/tmp*` named `*created-by-aap*`. +
+This helps validate that {aap} has actually connected and performed this respective task against the target host.
+
+In the AAP console, create a project using the following information:
+
+ * Source control type: *Git*
+ * Source control URL: https://github.com/fgiorgetti/ansible-tower-samples.git[*https://github.com/fgiorgetti/ansible-tower-samples.git*]
+ * Source control branch/tag/commit: *master*
+
+==== Create the inventory
+
+Now that the project has been created, we will create an inventory, to represent the hostnames to be managed inside the Third-party Network A.
+
+The inventory must have entries for the following hostnames:
+
+ * *server-a1.net-a*
+ * *server-a2.net-a*
+ * *server-a3.net-a*
+
+[IMPORTANT]
+====
+AAP should be able to resolve these hostnames, as they have been made available as services on the `*net-a*` namespace by {rhsi}, based on the `*Listeners*` created earlier.
+====
+
+==== Create the credential
+
+The inventory has been created but you must also make sure you have defined the appropriate credential on the {aap} Console, so that it can connect with those hostnames through SSH.
+
+==== Create the job template
+
+We need to create a job template.
+
+It will basically tie the Ansible project to be executed with the inventory that defines the target hosts and associate the credential to be used to access the Third-party Network A hosts.
+
+Make sure your `*Job template*` is configured using the correct *Project*, *Inventory* and *Credential*.
+
+At this point, all the AAP configuration needed is done.
 
 === Validating the scenario
 
-Now the whole scenario has been deployed, the *_Workflow job template_* that was created on AAP should be able to run and
-reach all servers.
+Now that the whole scenario has been deployed, the *_Job template_* that was created on AAP should be able to run and reach all servers.
 
-Back to the AAP console, go to:
-
-* `*Templates*` (under Automation Execution)
-* Click the `*third-party-networks*` workflow job template
-* Click the `*Launch template*` button
-* Watch the workflow
-* You should see a successful result
+Run your job template and you should be able to see a successful result, as in the illustrative example below.
 
 image::walkthrough_aap_workflow_success.png[Workflow job template successful]
 
@@ -493,5 +450,4 @@ image::walkthrough_aap_workflow_success.png[Workflow job template successful]
 
 {rhsi} dramatically expands the reach of your centralized {aap} by securely managing previously inaccessible hosts.
 
-Its user-friendly and declarative interface makes it easy to extend your automation to a wider range of devices,
-enabling you to manage hosts across hybrid and multi-cloud environments
+Its user-friendly and declarative interface makes it easy to extend your automation to a wider range of devices, enabling you to manage hosts across hybrid and multi-cloud environments.

@@ -1,0 +1,7 @@
+apiVersion: skupper.io/v2alpha1
+kind: Site
+metadata:
+  name: net-b
+  namespace: net-b
+spec:
+  linkAccess: default
