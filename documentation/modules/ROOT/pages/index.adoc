@@ -14,7 +14,7 @@ Additionally, setting up a VPN connection can introduce further complexities for
 complex IT environments. Many companies prefer to avoid the added administrative overhead associated with VPN.
 
 This solution pattern introduces a secure, flexible and easy alternative to expose desired hosts running in protected
-environments, to be managed remotely by AAP using *{rhsi}*.
+environments, to be managed remotely by AAP using *{rhsi}* (RHSI).
 
 
 *Contributors:* _Fernando Giorgetti (Red Hat)_
@@ -29,10 +29,10 @@ Solutions Patterns help you understand the art of the possible with Red Hat's po
 [#use-cases]
 == Use cases
 
-Common use cases that can be address with this architecture are:
+Common use cases that can be addressed with this architecture are:
 
 - Extend your Ansible automation to reach hosts on private networks
 - Exposing TCP workloads accessible by a Linux or a Container endpoint, into a Kubernetes or OpenShift cluster
-- Access workloads running on a Kubernetes or OpenShift cluster as a local endpoint in your internal network
+- Access workloads running on a Kubernetes or OpenShift cluster as a local endpoint in your internal network using {rhel}, Podman or Docker, without exposing the Kubernetes or OpenShift resource publicly.
 
 include::01-pattern.adoc[]

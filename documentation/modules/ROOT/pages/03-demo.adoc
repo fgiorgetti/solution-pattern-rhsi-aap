@@ -95,7 +95,7 @@ Just as a reminder, this walkthrough will only cover a single namespace on {ocp}
 The first thing we need to do is create the namespace for third-party network A. +
 The namespace will be named: `*net-a*`.
 
-This namespace will be used to compose the expected fully qualified hostnames to be used in the AAP inventories, example given: `*server-a1.net-a*`.
+This namespace will be used to compose the expected fully qualified hostnames to be used in the AAP inventory, example given: `*server-a1.net-a*`.
 
 Let's have a look at the custom resources we need to define this RHSI site.
 
@@ -254,7 +254,7 @@ site.skupper.io/net-a   OK
 A site bundle is a compressed file that contains the whole RHSI site definition to run outside of Kubernetes or OpenShift. +
 They can be installed to run as a container, using Podman or Docker and also as a regular process on a {rhel} server, which will require a local installation of the `*skupper-router*` _RPM_ package.
 
-The site bundle is an easy approach to install a prepared site definition on a remote location, but you could also create a non-Kubernetes site using the Skupper V2 CLI or a bootstrap container.
+The site bundle is an easy approach to install a prepared site definition on a remote location, but you could also create a non-Kubernetes site using the {rhsi} V2 CLI or a bootstrap container.
 
 Here are the Custom Resources (CRs) needed to define the site bundles.
 
@@ -264,7 +264,7 @@ Here are the Custom Resources (CRs) needed to define the site bundles.
 
 In order to prepare a site bundle to be installed at the Third Party Networks, we will create the Custom Resources (CRs) needed along with an `*AccessTokens*` that will be extracted from the `*net-a*` namespace running on the {ocp} cluster.
 
-To do it, execute the following commands:
+To do it, execute the following commands in a terminal that has access to `*net-a*` namespace running on your {ocp} cluster:
 
 [.console-input]
 [source,shell script]
@@ -338,7 +338,7 @@ Installation bundle available at: /home/my-user/.local/share/skupper/bundles/sku
 
 === Connecting the Third-party Network
 
-The last piece to complete the {rhsi} setup is to install the generated site-bundles on the respective server used to reach third-party network `*net-a*` hosts.
+The last piece to complete the {rhsi} setup is to install the generated site-bundles on the respective server used to reach Third-party Network A (`*net-a*`) hosts.
 
 To install, you should just send the site bundle file: `*skupper-install-net-a.sh*` to the target server where the RHSI site will be installed, then execute it, for example:
 
@@ -378,7 +378,7 @@ Now let's have a quick look at what must be done to install and configure {aap}.
 
 We will just briefly explain what is expected from your {aap} installation on the {ocp} cluster.
 
-The {aap} installation is expected to run in the "*aap*" namespace, using the {aap} Operator and an instance of the "Ansible Automation Platform" resource must be created and named "*my-aap*".
+The {aap} installation is expected to run in the "*aap*" namespace, using the {aap} Operator and an instance of the "Ansible Automation Platform" resource must be created.
 
 If you need further information, please refer to the https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html-single/installing_on_openshift_container_platform/index#proc-install-cli-aap-operatorinstalling-aap-operator-cli[official installation guide].
 
@@ -395,8 +395,8 @@ Here is what we will configure:
 
 * A project to run against all hosts
 * An inventory (to represent the Third-party Network A hostnames)
-* Define the credentials
-* A job templates (for Third-party Network A)
+* Define the credential
+* A job template (for Third-party Network A)
 
 ==== Create a project
 
@@ -413,7 +413,7 @@ In the AAP console, create a project using the following information:
 
 Now that the project has been created, we will create an inventory, to represent the hostnames to be managed inside the Third-party Network A.
 
-The inventory must store the following hostnames:
+The inventory must have entries for the following hostnames:
 
  * *server-a1.net-a*
  * *server-a2.net-a*
@@ -424,17 +424,17 @@ The inventory must store the following hostnames:
 AAP should be able to resolve these hostnames, as they have been made available as services on the `*net-a*` namespace by {rhsi}, based on the `*Listeners*` created earlier.
 ====
 
-==== Create the credentials
+==== Create the credential
 
 The inventory has been created but you must also make sure you have defined the appropriate credential on the {aap} Console, so that it can connect with those hostnames through SSH.
 
-==== Create the job templates
+==== Create the job template
 
-We need to create a job templates.
+We need to create a job template.
 
-It will basically tie the Ansible project to be executed with the inventory that defines the target hosts and associate the credential to be used for each third-party network.
+It will basically tie the Ansible project to be executed with the inventory that defines the target hosts and associate the credential to be used to access the Third-party Network A hosts.
 
-Make sure your `*Job template*` is configured using the correct: *Project*, *Inventory* and *Credential*.
+Make sure your `*Job template*` is configured using the correct *Project*, *Inventory* and *Credential*.
 
 At this point, all the AAP configuration needed is done.
 
@@ -442,7 +442,7 @@ At this point, all the AAP configuration needed is done.
 
 Now that the whole scenario has been deployed, the *_Job template_* that was created on AAP should be able to run and reach all servers.
 
-Run your job template and you should be able to see a successful result, as in the following example.
+Run your job template and you should be able to see a successful result, as in the illustrative example below.
 
 image::walkthrough_aap_workflow_success.png[Workflow job template successful]
 

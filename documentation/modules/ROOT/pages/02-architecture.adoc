@@ -42,8 +42,7 @@ RHSI link, coming from the third-party network. Once the {rhsi} link is establis
 and security, a selected set of servers, running in the third-party network, will be exposed by an RHSI instance running
 within the third-party network, into the third-party specific namespace on the {ocp} cluster.
 
-The respective servers are then exposed as Kubernetes services within the third-party namespace, where the AAP instance
-will be able to communicate with them via SSH transparently through RHSI.
+The respective servers are then exposed as Kubernetes services within the third-party namespace, allowing the AAP instance to communicate with them via SSH transparently through RHSI.
 
 Distinct inventories will be created inside AAP, for each third-party network, representing the servers to be managed.
 
@@ -75,7 +74,7 @@ One of them, represented as *_Third-party network A_* has an RHSI instance runni
 
 The following one, represented as *_Third-party network B_* has an RHSI instance running using *Podman*.
 
-It is important to mention that {rhsi} (version 2+) runs on Kubernetes clusters,
+It is important to mention that {rhsi} (version 2+) runs on any Kubernetes cluster (like {ocp}),
 {rhel} and using Podman or Docker container engines.
 
 [#walkthrough_overview]

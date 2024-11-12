@@ -14,7 +14,7 @@ their server's infrastructure.
 image::story_diagram.png[Scenario]
 
 These organizations need an easy way to expose their target servers to be managed by the trusted partner,
-and they do not want to allocate extra resources to change their network infrastructure.
+and they do not want to allocate extra resources or change their network infrastructure.
 
 == The Solution
 
