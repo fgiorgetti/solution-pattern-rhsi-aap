@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: network-policy-aap
+  namespace: net-a
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: skupper-router
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchExpressions:
+        - key: 'kubernetes.io/metadata.name'
+          operator: In
+          values: ["aap", "net-a"]
+  egress:
+  - {}

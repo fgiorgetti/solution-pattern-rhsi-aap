@@ -1,0 +1,33 @@
+---
+apiVersion: skupper.io/v2alpha1
+kind: Listener
+metadata:
+  name: server-a1
+  namespace: net-a
+spec:
+  host: server-a1
+  port: 22
+  routingKey: server-a1
+  type: tcp
+---
+apiVersion: skupper.io/v2alpha1
+kind: Listener
+metadata:
+  name: server-a2
+  namespace: net-a
+spec:
+  host: server-a2
+  port: 22
+  routingKey: server-a2
+  type: tcp
+---
+apiVersion: skupper.io/v2alpha1
+kind: Listener
+metadata:
+  name: server-a3
+  namespace: net-a
+spec:
+  host: server-a3
+  port: 22
+  routingKey: server-a3
+  type: tcp

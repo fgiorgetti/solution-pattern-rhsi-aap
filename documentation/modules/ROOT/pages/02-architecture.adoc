@@ -69,7 +69,7 @@ image::architecture_alternative_diagram.png[Alternative architecture]
 [#more_tech]
 == About the Technology Stack
 
-{rhsi} provides access to selected workloads running in the third-party network.
+{rhsi} provides access to selected workloads running in the third-party network. +
 In this solution pattern, we illustrate two third-party networks being managed by AAP.
 One of them, represented as *_Third-party network A_* has an RHSI instance running on a *{rhel}* (RHEL) machine.
 
@@ -77,3 +77,15 @@ The following one, represented as *_Third-party network B_* has an RHSI instance
 
 It is important to mention that {rhsi} (version 2+) runs on Kubernetes clusters,
 {rhel} and using Podman or Docker container engines.
+
+[#walkthrough_overview]
+== Walkthrough overview
+
+In the next section, we will walk you through the setup of this solution pattern. This walkthrough guide will cover just a subset of the architecture diagram presented earlier.
+
+It explains what needs to be done in order to:
+
+* Install {rhsi} version 2 on a {ocp} cluster
+* Create a functional {rhsi} Site on {ocp} to provide access to the _Third-party Network A_ hostnames
+* Create and install a {rhsi} Site Bundle inside the _Third-party Network A_
+* Provide a minimum set of configuration needed on a {aap} installation running on {ocp}

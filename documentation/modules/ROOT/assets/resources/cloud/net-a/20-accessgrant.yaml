@@ -1,0 +1,8 @@
+apiVersion: skupper.io/v2alpha1
+kind: AccessGrant
+metadata:
+  name: net-a-grant
+  namespace: net-a
+spec:
+  redemptionsAllowed: 1
+  expirationWindow: 30m

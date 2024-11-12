@@ -1,0 +1,27 @@
+---
+apiVersion: skupper.io/v2alpha1
+kind: Connector
+metadata:
+  name: server-a1
+spec:
+  host: 192.168.8.101
+  port: 22
+  routingKey: server-a1
+---
+apiVersion: skupper.io/v2alpha1
+kind: Connector
+metadata:
+  name: server-a2
+spec:
+  host: 192.168.8.102
+  port: 22
+  routingKey: server-a2
+---
+apiVersion: skupper.io/v2alpha1
+kind: Connector
+metadata:
+  name: server-a3
+spec:
+  host: 192.168.8.103
+  port: 22
+  routingKey: server-a3

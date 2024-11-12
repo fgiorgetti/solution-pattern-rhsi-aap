@@ -7,15 +7,16 @@
 ** xref:02-architecture.adoc#tech_stack[{module}.{counter:submodule2}. Technology stack]
 ** xref:02-architecture.adoc#in_depth[{module}.{counter:submodule2}. An in-depth look at the solution's architecture]
 ** xref:02-architecture.adoc#more_tech[{module}.{counter:submodule2}. More about the technology stack]
+** xref:02-architecture.adoc#walkthrough_overview[{module}.{counter:submodule2}. Walkthrough overview]
 
 * xref:03-demo.adoc[{counter:module}. See the Solution in Action]
 ** xref:03-demo.adoc#_before_running_the_solution[{module}.{counter:submodule3}. Before runing the solution]
 ** xref:03-demo.adoc#_walkthrough[{module}.{counter:submodule3}. Walkthrough]
-*** xref:03-demo.adoc#_downloading_resources_needed[{module}.{counter:submodule3}. Downloading resources needed]
-*** xref:03-demo.adoc#_installing_red_hat_ansible_automation_platform[{module}.{counter:submodule3}. Installing AAP]
-*** xref:03-demo.adoc#_configuring_your_ansible_automation_platform_instance[{module}.{counter:submodule3}. Configuring AAP]
+*** xref:03-demo.adoc#_installing_the_red_hat_service_interconnect_command_line_tool[{module}.{counter:submodule3}. Installing the Red Hat Service Interconnect command line tool]
 *** xref:03-demo.adoc#_installing_red_hat_service_interconnect_on_red_hat_openshift[{module}.{counter:submodule3}. Installing RHSI on OCP]
 *** xref:03-demo.adoc#_connecting_the_third_party_networks[{module}.{counter:submodule3}. Connecting Third Party Networks]
+*** xref:03-demo.adoc#_installing_red_hat_ansible_automation_platform[{module}.{counter:submodule3}. Installing AAP]
+*** xref:03-demo.adoc#_configuring_your_ansible_automation_platform_instance[{module}.{counter:submodule3}. Configuring AAP]
 *** xref:03-demo.adoc#_validating_the_scenario[{module}.{counter:submodule3}. Validating the scenario]
 ** xref:03-demo.adoc#_conclusion[{module}.{counter:submodule3}. Conclusion]
 
@@ -23,3 +24,5 @@
 * xref:developer-resources.adoc[{counter:module}. Developer Resources]
 
 * https://redhat-solution-patterns.github.io/solution-patterns/patterns.html[Explore Red Hat Solution Patterns^]
+
+
