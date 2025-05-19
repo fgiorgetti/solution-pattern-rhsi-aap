@@ -13,49 +13,66 @@ In order to reproduce the following solution, you will need the following resour
 
 * Access to a running {ocp} cluster with {aap} operator available through the Operator Hub  
 * A subscription or trial license for {aap} (running on {ocp} cluster)  
-* {rhsi} (version 2.x) RPM to be installed at the {rhel} machine (for Third-party Network A)  
+* {rhsi} (version 2.0) Controller deployment YAMLs for {ocp}
+* {rhsi} (version 2.0) RPM to be installed at the {rhel} machine (for Third-party Network A)
 * A few virtual machines to be used as third-party servers, with SSH server running  
 * A machine or a virtual machine with {rhel} to simulate third-party network A, with access to the respective servers  
 * A Linux machine or virtual machine with Podman version 4+ to simulate third-party network B, with access to the respective servers (optional)
-* Install the Skupper CLI version 2.x
+* Install the Skupper CLI version 2.0
 * The following commands are expected: `kubectl`, `jq`, `awk`, `wget` and `podman`
 
 == Walkthrough
 
 === Installing the {rhsi} command line tool
 
-You need to install the {rhsi} command line tool in order to generate AccessTokens to the connect your third-party
+You need to install the {rhsi} command line tool in order to generate AccessTokens to connect your third-party
 network sites with {rhsi} running in the cloud.
 
 [.console-input]
 [source,shell script]
 ----
-curl https://skupper.io/install.sh | sh -s -- --version 2.0.0-preview-1
+dnf config-manager --set-enabled service-interconnect-2-for-rhel-9-x86_64-rpms
+dnf install skupper-cli-2.0.0
 ----
 
-The script installs the command under your home directory. It prompts you to add the command to your path if necessary.
+=== Installing the {rhsi} Router on Third-Party Network A
+
+The solution architecture diagram tells you that the Third-Party Network A will run {rhsi} on a {rhel} server as a
+regular process, which depends on the {rhsi} Router RPM package being installed first.
+
+You can optionally run {rhsi} there using Podman, if it is more convenient to you. If that is the case, you can skip
+the following task.
+
+[.console-input]
+[source,shell script]
+----
+dnf config-manager --set-enabled service-interconnect-2-for-rhel-9-x86_64-rpms
+dnf install skupper-router-3.2.0
+----
 
 === Installing {rhsi} on {ocp}
 
-[IMPORTANT]
-====
-The following instructions use the upstream version of {rhsi} (Skupper V2), +
-as at the time this solution pattern has been written, RHSI Version 2 has not yet been released. +
-Once RHSI Version 2 is released, this whole section will be updated to use it instead.
-====
-
-We need to install *{rhsi}* in two separate namespaces. +
-The reason for this is to ensure that each third-party network is connected to an isolated _Virtual Application Network_ (VAN).
+We need to install *{rhsi}* on the {ocp} cluster as we will need to create two separate Sites in two distinct namespaces. The reason for this is to ensure that each Third-party Site is connected to an isolated _Virtual Application Network_ (VAN).
 
 Along with that we will also create _Network Policies_ to ensure that each namespace is only accessible by AAP, so that the third-party servers exposed into the {ocp} cluster can only be reached internally by AAP.
 
 ==== Installing the *{rhsi}* controller
 
 The RHSI controller is deployed to its own namespace and it has the ability to watch for RHSI resources across all namespaces in the {ocp} cluster.
+You can install the RHSI controller using the following approaches:
 
-Let's install the RHSI controller:
+* The Red Hat Service Interconnect Operator (available through the Red Hat operators catalog on OpenShift clusters)
+ ** NOTE: you must use channel *stable-2*
+* Using YAMLs available through the https://access.redhat.com/downloads[Red Hat Software Downloads page]
+ ** Product: Red Hat Service Interconnect
+ ** Version: 2.0.0
+ ** Type: Distributions
+ ** File: Skupper deployments (yamls)
+
+Let's install the RHSI controller using the downloaded YAMLs:
 
 * Open a terminal
+* Download the RHSI controller YAMLs from Red Hat Software Downloads page (detailed above)
 * Set the *KUBECONFIG* environment variable
  ** You must be logged in as a cluster administrator
 * Create the `*skupper*` namespace, using:
@@ -71,7 +88,7 @@ kubectl create namespace skupper
 [.console-input]
 [source,shell script]
 ----
-kubectl -n skupper apply -f https://skupper.io/v2/install.yaml
+kubectl -n skupper apply -f skupper-cluster-scope-2.0.0-rh.yaml
 ----
 +
 * Now wait for the *skupper-controller* pod to be running on the *skupper* namespace:
@@ -117,19 +134,19 @@ The site definiton sets the *_linkAccess_* value to *_default_*. This will ensur
 On {ocp} clusters, a *Route* should be created, otherwise a *LoadBalancer* service will be created.
 This ingress method is used to accept incoming links, coming from other Sites.
 
-The `*AccessGrant*` allows a single `*AccessToken*` to be redeemed and it must be redeemed within 30 minutes from `*AccessGrant*` creation, otherwise it won't be valid.
+The `*AccessGrant*` allows a single `*AccessToken*` to be redeemed and it must be redeemed within 30 minutes from `*AccessGrant*` creation, otherwise it won't be valid anymore.
 
 Each site has a `*Listener*` for each target server expected by AAP. +
 The `*spec.host*` field determines the service name that will be created on the respective namespace,
-therefore the fully qualified service name will be composed by the `spec.host` field plus the namespace name, matching the hostnames that will be added to the inventories in AAP.
+therefore the fully qualified service name will be composed by the `spec.host` field plus the namespace name, matching the hostnames that will be added to the inventories on AAP.
 
 The `*spec.routingKey*` is used to determine the matching Connector.
 So the RHSI sites created inside the third-party networks, must define the respective `*spec.routingKey*`.
 
-Along with the RHSI resources, a _Network policy_ will be defined, to add an extra security layer, preventing undesired internal access to your third-party network namespaces. +
-This `*NetworkPolicy*` allows ingress to the `*skupper-router*` pod only coming from pods running on the `*aap*` or the self namespace `*net-a*`.
+Along with the RHSI resources, _Network policies_ will be defined, to add an extra security layer, preventing undesired internal access to your third-party network namespaces. +
+These `*NetworkPolicies*` allow ingress to the `*skupper-router*` pod only coming from pods running on the `*aap*` namespace, the self namespace `*net-a*` or from external sites (through {rhsi} links).
 
-To create the namespace, the RHSI site and the network policy, run the following commands in your terminal that has access to the {ocp} cluster. The commands below will first create the resources in a local directory then apply them to the {ocp} cluster.
+To create the namespace, the RHSI site and the network policies, run the following commands in your terminal that has access to the {ocp} cluster. The commands below will first create the resources in a local directory then apply them to the {ocp} cluster.
 
 [.console-input]
 [source,shell script]
@@ -203,6 +220,7 @@ spec:
 EOF
 
 cat << EOF > cloud/net-a/40-networkpolicy.yaml
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -224,6 +242,21 @@ spec:
           values: ["aap", "net-a"]
   egress:
   - {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-router
+  namespace: net-a
+spec:
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          policy-group.network.openshift.io/ingress: ""
+  podSelector: {}
+  policyTypes:
+  - Ingress
 EOF
 
 kubectl apply -f ./cloud/net-a/
@@ -252,9 +285,9 @@ site.skupper.io/net-a   OK
 ==== Preparing site bundles for the third-party network
 
 A site bundle is a compressed file that contains the whole RHSI site definition to run outside of Kubernetes or OpenShift. +
-They can be installed to run as a container, using Podman or Docker and also as a regular process on a {rhel} server, which will require a local installation of the `*skupper-router*` _RPM_ package.
+They can be installed to run as a container, using Podman or Docker and also as a regular process on a {rhel} server, which will require a local installation of the `*skupper-router*` _RPM_ package (explained earlier).
 
-The site bundle is an easy approach to install a prepared site definition on a remote location, but you could also create a non-Kubernetes site using the {rhsi} V2 CLI or a bootstrap container.
+The site bundle is an easy approach to install a prepared site definition on a remote location, but you could also create a system site using the {rhsi} V2 CLI or a bootstrap container.
 
 Here are the Custom Resources (CRs) needed to define the site bundles.
 
@@ -264,7 +297,7 @@ Here are the Custom Resources (CRs) needed to define the site bundles.
 
 In order to prepare a site bundle to be installed at the Third Party Networks, we will create the Custom Resources (CRs) needed along with an `*AccessTokens*` that will be extracted from the `*net-a*` namespace running on the {ocp} cluster.
 
-To do it, execute the following commands in a terminal that has access to `*net-a*` namespace running on your {ocp} cluster:
+To do it, execute the following commands on a terminal with access to `*net-a*` namespace, running on your {ocp} cluster:
 
 [.console-input]
 [source,shell script]
@@ -325,7 +358,7 @@ Now that all the CRs are in place, we must generate the site bundle, using:
 [.console-input]
 [source,shell script]
 ----
-curl -s https://raw.githubusercontent.com/skupperproject/skupper/refs/heads/v2/cmd/bootstrap/bootstrap.sh | sh -s -- -p ./internal/net-a -b bundle
+skupper --platform podman system setup --path ./internal/net-a -b bundle
 ----
 
 The bundle will be generated and its location can be found through a message that says:
@@ -338,7 +371,7 @@ Installation bundle available at: /home/my-user/.local/share/skupper/bundles/sku
 
 === Connecting the Third-party Network
 
-The last piece to complete the {rhsi} setup is to install the generated site-bundles on the respective server used to reach Third-party Network A (`*net-a*`) hosts.
+The last piece to complete the {rhsi} setup is to install the generated site-bundle on the respective server, used to reach Third-party Network A (`*net-a*`) hosts.
 
 To install, you should just send the site bundle file: `*skupper-install-net-a.sh*` to the target server where the RHSI site will be installed, then execute it, for example:
 
@@ -351,9 +384,10 @@ ssh my-user@my-server-third-party-net-a ./skupper-install-net-a.sh -n net-a
 
 [WARNING]
 ====
-The commands above have been executed against internal hosts that
-represent the servers where the RHSI site bundle will be installed
-and these servers can reach the target hosts that will be managed by AAP. +
+The commands above have been executed against an internal host that
+represents the Third Party Network A server where the RHSI site bundle
+will be installed into and this server can reach the target hosts that
+will be managed by AAP. +
 Update the commands to use your own hostnames or IP addresses.
 ====
 
@@ -365,8 +399,8 @@ If you want your *Third Party Network A* site to run using a regular process and
 [source,shell script]
 ----
 scp skupper-install-net-a.sh my-user@my-server-third-party-net-a:
-ssh my-user@my-server-third-party-net-a dnf -y install skupper-router
-ssh my-user@my-server-third-party-net-a ./skupper-install-net-a.sh -n net-a -p systemd
+ssh my-user@my-server-third-party-net-a dnf -y install skupper-router-3.2.0
+ssh my-user@my-server-third-party-net-a ./skupper-install-net-a.sh -n net-a -p linux
 ----
 ====
 
@@ -378,7 +412,8 @@ Now let's have a quick look at what must be done to install and configure {aap}.
 
 We will just briefly explain what is expected from your {aap} installation on the {ocp} cluster.
 
-The {aap} installation is expected to run in the "*aap*" namespace, using the {aap} Operator and an instance of the "Ansible Automation Platform" resource must be created.
+The {aap} installation is expected to run in the "*aap*" namespace. +
+Using the {aap} Operator, an instance of the "Ansible Automation Platform" resource must be created.
 
 If you need further information, please refer to the https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html-single/installing_on_openshift_container_platform/index#proc-install-cli-aap-operatorinstalling-aap-operator-cli[official installation guide].
 
@@ -400,13 +435,13 @@ Here is what we will configure:
 
 ==== Create a project
 
-The Ansible project that will be used in this solution pattern is a simple fork from the ansible-tower-samples repository which includes an extra task that simply creates a directory under `*/tmp*` named `*created-by-aap*`. +
-This helps validate that {aap} has actually connected and performed this respective task against the target host.
+The Ansible project that will be used in this solution pattern is a sample project provided by the Ansible team,
+that simply connects to each server from your inventory and displays a "Hello World" message.
 
 In the AAP console, create a project using the following information:
 
  * Source control type: *Git*
- * Source control URL: https://github.com/fgiorgetti/ansible-tower-samples.git[*https://github.com/fgiorgetti/ansible-tower-samples.git*]
+ * Source control URL: https://github.com/ansible/ansible-tower-samples.git[*https://github.com/ansible/ansible-tower-samples.git*]
  * Source control branch/tag/commit: *master*
 
 ==== Create the inventory
