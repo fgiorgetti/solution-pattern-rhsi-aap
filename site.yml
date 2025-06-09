@@ -5,6 +5,8 @@ site:
   title: Solution Patterns for Cloud Native Architectures
   url: https://redhat-solution-patterns.github.io/solution-patterns/
   start_page: solution-pattern-rhsi-aap::index.adoc
+  keys:
+    google_analytics: 'G-KQS1H4XLHJ'
 
 content:
   sources:
